@@ -35,16 +35,6 @@ START:
     
 *    
 
-*    - FOR TEST RANGE FROM 996 - 9CF PUT CODES OR NOP ANYWHERE BETWEEN
-*   
-*    Put program code here
-*    -----
-*    This program starts by given a starting address and an ending address disassemble
-*    the binary code that is at that location.
-
-*    Needs to check for odd addressing**  
-*    -----
-
 *    ---------------------I/O SECTION
 
 *    Grabs ascii from user and converts to hex stored into memory
@@ -68,6 +58,13 @@ get_input_start_addr
     TRAP    #15
     JSR     parse_input             parse the starting address
     MOVE.L  D6,A5                   MOVE OUR STARTING ADDRESS TO A6
+    
+    
+    MOVE.L  #0,D3
+    MOVE.L  D6,D3       Check for odd addressing
+    ASR     #1,D3
+    BCS     oddError
+    MOVE.L  D6,A5
 
 
 get_input_end_addr
@@ -82,6 +79,13 @@ get_input_end_addr
     TRAP    #15
     JSR     parse_end
     MOVE.L  D6,A6           MOVE OUT ENDING ADDRESS TO 
+    
+    
+    MOVE.L  #0,D3       check for odd addressing
+    MOVE.L  D6,D3
+    ASR #1,D3
+    BCS     oddError
+    MOVE.L  D6,A6
 
 STORE_SRT_END:
 
@@ -243,7 +247,7 @@ mainLoop
 
 *    -----------------------------------------------------------------------           
 
-    BRA     opERROR     ;invalid opcode display we havent implemented this code yet
+    BRA     opERROR     ;invalid opcode display 
     
 
 get_next_instruction:
@@ -252,14 +256,15 @@ get_next_instruction:
     JSR     lineCount
     CLR     D5             *-CLEAR THIS REGISTER/
     
-    Lea     good_code_buffer,A2 ;reset A2, LOADS THE BUFFER TO GET READY TO PRINT TO IT/WRITE TO IT
-    MOVE.W  A4,A0   UPDATE OUR OLD ADDRESS STORED AT 10 WITH THE MOST CURRENT POINTER ADDRESS *INCRMENTED BY A WORD
-    MOVE.L  #2,D7   *-CHECKER FOR ERROR
+    LEA     good_code_buffer,A2 ;reset A2, LOADS THE BUFFER TO GET READY TO PRINT TO IT/WRITE TO IT
+    MOVE.W  A4,A0           UPDATE OUR OLD ADDRESS STORED AT 10 WITH THE MOST CURRENT POINTER ADDRESS *INCRMENTED BY A WORD
     MOVE.L  A0,D3   *-MOVE AROUND TEH DATA STORED AT CURRENT POINTER TO D3 REGISTER TO WORK WITH IT
     MOVE.L  D3,D6
     LEA     good_code_buffer,A2
     *-write the current data moved to data register d3
-    JSR     write_data_in_D3_to_buffer
+    ;JSR     write_data_in_D3_to_buffer
+    MOVE.L  D3,D4
+    JSR     print_long
     
     MOVE.B  #' ',(A2)
     MOVE.B  #' ',(A2)
@@ -284,7 +289,6 @@ write_data_in_D3_to_buffer:
     *----------------------------------------------------------------------------------------------
     *   This is where we write to whatever is in data registrer D3 our dedicated D3 writer buffer writer
     *----------------------------------------------------------------------------------------------
-    CMP.W   #2,D7 ERROR checking
     BNE     print_word branch off to write the first word of the line
     SWAP    D3
     SWAP    D6
@@ -292,7 +296,7 @@ write_data_in_D3_to_buffer:
     SWAP    D6
     MOVE.L  D6,D3
     
- print_word:
+print_word:
     *-------------------------------------------------------------
     * called 4 times to decode from hex to ascii the first word
     *   using the below jump table
@@ -566,7 +570,7 @@ M0001                               ;An
     MOVEA.L A2,A3           ;get address for n
     MOVE.B  #' ',(A2)+      ;blank
     RTS
-
+*-Orthoginal means statistically independant
 *    -----------------------------------------------------------            
 
 *    Subroutine M0010 ------------------------------------------
@@ -709,7 +713,7 @@ RN0010
     RTS
  
 *    -----------------------------------------------------------            
-
+    
 *    Subroutine RN0011 ------------------------------------------
 
 RN0011
@@ -1153,7 +1157,7 @@ WordOrLong
     INCLUDE 'op0010.x68'    MOVE.L, MOVEA.L
     INCLUDE 'op1101.x68'    ADD,ADDA
     INCLUDE 'op1001.x68'    SUB, SUBA
-    INCLUDE 'op1000.x68'    DIVU
+    INCLUDE 'op1000.x68'    DIVU999
     INCLUDE 'op0111.x68'    MOVEQ
     INCLUDE 'op0000.x68'    ADDI
     INCLUDE 'op0101.x68'    SUBQ,ADDQ
@@ -1211,10 +1215,18 @@ hex_F   EQU     %1111 ;F
 
 
 
-opError:                             
+opError:
+    *-if its error no 4 MSB match move the address into D3 and call
+    *-write data in 3 to buffer                             
 
+    MOVE.L  A0,D3
+    MOVE.L  A0,D6
+    
+    MOVE.L  A0,D4
     LEA     bad_code_buffer,A2
-    JSR     write_data_in_D3_to_buffer
+    JSR     print_long
+    *LEA     bad_code_buffer,A2
+    ;JSR     write_data_in_D3_to_buffer
     
     MOVE.B  #' ',(A2)+      ;print spaces
     MOVE.B  #' ',(A2)+      ;print spaces
@@ -1236,6 +1248,7 @@ opError:
     MOVE.B  #'F',(A2)+     
        
     MOVE.B  #$00,(A2)       add NULL to end of string buffer
+    *LEA    good_code_buffer,A2
     LEA     bad_code_buffer,A1
     MOVE.B  #13,D0
     TRAP    #15
@@ -1417,7 +1430,14 @@ error_char      LEA bad_char,A1
 error_bad_entry LEA bad_entry,A1
     TRAP #15
     ;JMP  get_input
-
+oddError
+    CLR     D0
+    MOVE.B  #0,D0
+    LEA     oddInput,A1         * load odd number error
+    MOVE.B  odd_input_buffer,D1      * set odd number error
+    TRAP    #15                 * display odd number entered
+    MOVE.B  #0,D1
+    JMP     get_input_start_addr
     SIMHALT             ; halt simulator
 
 *=======================================================================
@@ -1437,7 +1457,8 @@ ending10    DC.B    '/////////////////////////////////',0
 
 welcome_message DC.B    'Welcome to the 68kKrews 68K disassembler',CR,LF
                 DC.B    'Created By Danny Ly & Edward Chang',CR,LF,0 Welcome message
-
+oddInput        DC.B    'ERROR input is Odd, address must be even',0
+odd_input_buffer    DC.B    odd_input_buffer-oddInput
 hitEnter        DC.B    'Hit enter to display the next page.'
 enterBuf        DC.B    enterBuf-hitEnter
 haltEntry       DS.B    1
@@ -1452,7 +1473,7 @@ bad_char        DC.B    'Bad Char detected.',0
 *    -errors
 
 
-rerunState      DC.B 'Do you want to run it again? Hit Y for yes, else no:',0
+rerunState      DC.B 'Reapeat the decoding ? Type Y and Enter for yes, otherwise no(type nothing):',0
 rerunBuf        DC.B rerunBuf-rerunState
 userRerun       DS.B 50 * reserved for user's answer to rerun program
 blankLine       DC.B ' ',0
@@ -1560,6 +1581,7 @@ runAgain
 
 
 
+    
 
 *~Font name~Courier New~
 *~Font size~10~
