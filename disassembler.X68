@@ -1360,61 +1360,20 @@ WordOrLong
 
 
 
-
-
-
-
     
     
-
-    
-opError                             
-    MOVE.L  A0,D3
-    MOVE.L  D3,D6
-    LEA     bad_code_buffer,A2
-    MOVE.L  #2,D7
-    JSR     write_data_in_D3_to_buffer
-    
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #'D',(A2)+      ;print D
-    MOVE.B  #'A',(A2)+      ;print A
-    MOVE.B  #'T',(A2)+      ;print T
-    MOVE.B  #'A',(A2)+      ;print A
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    
-    
-    MOVE.B  #'F',(A2)+      ;print spaces
-    MOVE.B  #'F',(A2)+      ;print spaces
-    MOVE.B  #'F',(A2)+      ;print spaces
-    MOVE.B  #'F',(A2)+      ;print spaces
-    
-    
-    ;MOVE.L  (A0),D3
-    ;MOVE.L  D3,D6
-    ;MOVE.L  #1,D7
-    ;JSR     write_data_in_D3_to_buffer
-    
-    MOVE.B  #$00,(A2) * add NULL value to print string
-    LEA     bad_code_buffer,A1
-    MOVE.B  #13,D0
-    TRAP    #15
-    
-    BRA     get_next_instruction
 printCode   
     MOVE.B  #$00,(A2)   * add NULL value to print string
     MOVEP   (A2),D3
     LEA     good_code_buffer,A1 * load buffer for good code to print
     MOVEQ   #13,D0
     TRAP    #15         * display code
-  
     BRA     get_next_instruction
-*    OP Codes -------------------------------------------------
+    
+    
+    
+    
+*------------------------------    OP Codes --------------------------
 
 bin0000     EQU     %0000   ;ADDI, ANDI, EORI, BCHG, CMPI
 bin0001     EQU     %0001   ;MOVE.B
@@ -1431,7 +1390,7 @@ bin1100     EQU     %1100   ;AND, MULS.W
 bin1101     EQU     %1101   ;ADD, ADDA
 bin1110     EQU     %1110   ;ASR, ASL, ROL, ROR
 
-*    Binary HEX values*---------------------------------------------------------------
+*----------------------------------Binary HEX values*-------------------
 
 hex_0   EQU     %0000 ;0 percent syntax means binary repersentation of this value
 hex_1   EQU     %0001 ;1
@@ -1449,21 +1408,41 @@ hex_C   EQU     %1100 ;C
 hex_D   EQU     %1101 ;D
 hex_E   EQU     %1110 ;E
 hex_F   EQU     %1111 ;F      
-    
-;LOOP:
-    *-compare the adress pointers current address with ending address to see if we need to continue
-    *- load the address registrer (pointer/ this helps us look at data)
-    *-load address register number into data register
-    
-    ;MOVE.L  a5,d2   ;move the value of a5 to d2(starting/current pointing number)
-    ;lea     $00FFFF10,a6    ;load the ending address to d3(we do this so in the future d3 is not just storing something, we can free up d3 to use
-    ;MOVE.L  (a6),d3         since we loaded the address of ou engine value into a address register 'basically keeping its pointer instance' we deref it for the value
-    ;CMP.L   d2,d3       ;if the current poiinter is the same as
-    ;BEQ     FINISH      ;finish they are equal
-    ;RTS
 
+
+
+
+opError:                             
+*    MOVE.L  A0,D3
+*    MOVE.L  D3,D6
+    LEA     bad_code_buffer,A2
+    JSR     write_data_in_D3_to_buffer
     
-    *----------END OF I/O SECTION*---
+    MOVE.B  #' ',(A2)+      ;print spaces
+    MOVE.B  #' ',(A2)+      ;print spaces
+    MOVE.B  #' ',(A2)+      ;print spaces
+    MOVE.B  #' ',(A2)+      ;print spaces
+    MOVE.B  #'D',(A2)+      ;print D
+    MOVE.B  #'A',(A2)+      ;print A
+    MOVE.B  #'T',(A2)+      ;print T
+    MOVE.B  #'A',(A2)+      ;print A
+    MOVE.B  #' ',(A2)+     
+    MOVE.B  #' ',(A2)+    
+    MOVE.B  #' ',(A2)+      
+    MOVE.B  #' ',(A2)+      
+    
+    
+    MOVE.B  #'F',(A2)+     
+    MOVE.B  #'F',(A2)+     
+    MOVE.B  #'F',(A2)+    
+    MOVE.B  #'F',(A2)+     
+       
+    MOVE.B  #$00,(A2)       add NULL to end of string buffer
+    LEA     bad_code_buffer,A1
+    MOVE.B  #13,D0
+    TRAP    #15
+    BRA     get_next_instruction
+    
     
 FINISH:
     *INCLUDE 'opcode_subroutine.x68'
@@ -1494,9 +1473,11 @@ FINISH:
     LEA     good_code_buffer,A1
     MOVE.B  #13,D0
     TRAP    #15
+    
+    
     SIMHALT
 
-*    -390 -> 406 WITH NOP AT 400
+
 
 *-----------------------------------------------------------------
 *           I/O Section
@@ -1633,13 +1614,10 @@ userStartAddrInput  DS.B    50  address used to store the data input from user
 userEndAddrInput    DS.B    50  address used to stoer the data input from use
 userEnd         DC.B    'Enter an address greater than the starting address: ',0
 userEndInput    DS.B    50  addresse used to store the data input from user
+
 error_inv_to_many_char  LEA no_entry,A1 load bad entry statment
     MOVE.L  #1,D0
     TRAP    #15
-    ;JMP     get_input
-
-*    -i dea i could load the string "           DATA            " without the cursor and find a way to load the address at the line
-
 
     END    START        ; last line of source
 
@@ -1658,6 +1636,8 @@ error_inv_to_many_char  LEA no_entry,A1 load bad entry statment
 *    ~Tab type~1~
 
 *    ~Tab size~4~
+
+
 
 
 *~Font name~Courier New~
