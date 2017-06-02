@@ -21,7 +21,6 @@ start		EQU	$00009000	* ORG and END address
 
 		ORG	start
 
-NOP
 *    ---------------------------------------------------
 
 *    page01 - tested
@@ -135,37 +134,37 @@ NOP
 *    ---------------------------------------------------
 
     MOVE.L    -(A0),-(A1)
-*    MOVEM.W   A1-A7,-(A1)
+    MOVEM.W   A1-A7,-(A1)
 
-*    MOVEM.L   D1-D7,-(A1)
+    MOVEM.L   D1-D7,-(A1)
 
-*    MOVEM.W   A1/D7,-(A1)
+    MOVEM.W   A1/D7,-(A1)
 
-*    MOVEM.L   A1/D7,-(A1)
+    MOVEM.L   A1/D7,-(A1)
 
-*    MOVEM.W   A1-A7,(A1)
+    MOVEM.W   A1-A7,(A1)
 
-*    MOVEM.L   D1-D7,(A1)
+    MOVEM.L   D1-D7,(A1)
 
-*    MOVEM.W   A1/D7,(A1)
+    MOVEM.W   A1/D7,(A1)
 
-*    MOVEM.L   A1/D7,(A1)
+    MOVEM.L   A1/D7,(A1)
 
-*    MOVEM.W   (A1)+,A1-A7
+    MOVEM.W   (A1)+,A1-A7
 
-*    MOVEM.L   (A1)+,D1-D7
+    MOVEM.L   (A1)+,D1-D7
 
-*    MOVEM.W   (A1)+,A1/D7
+    MOVEM.W   (A1)+,A1/D7
 
-*    MOVEM.L   (A1)+,A1/D7
+    MOVEM.L   (A1)+,A1/D7
 
-*    MOVEM.W   (A1),A1-A7
+    MOVEM.W   (A1),A1-A7
 
-*    MOVEM.L   (A1),D1-D7
+    MOVEM.L   (A1),D1-D7
 
-*    MOVEM.W   (A1),A1/D7
+    MOVEM.W   (A1),A1/D7
 
-*    MOVEM.L   (A1),A1/D7
+    MOVEM.L   (A1),A1/D7
 
     MOVEA.W    D0,A0
     MOVEA.W    A0,A0
@@ -392,53 +391,53 @@ label3
     ADDI.L    #$12345678,-(A0)
     ADDI.L    #$12345678,$1234
     ADDI.L    #$12345678,$12345678
-*    MOVEM.W   A1-A7,$12
+    MOVEM.W   A1-A7,$12
 
-*    MOVEM.L   D1-D7,$12
+    MOVEM.L   D1-D7,$12
 
-*    MOVEM.W   A1/D7,$12
+    MOVEM.W   A1/D7,$12
 
-*    MOVEM.L   A1/D7,$12
+    MOVEM.L   A1/D7,$12
 
-*    MOVEM.W   A1-A7,$1234
+    MOVEM.W   A1-A7,$1234
 
-*    MOVEM.L   D1-D7,$1234
+    MOVEM.L   D1-D7,$1234
 
-*    MOVEM.W   A1/D7,$1234
+    MOVEM.W   A1/D7,$1234
 
-*    MOVEM.L   A1/D7,$1234
+    MOVEM.L   A1/D7,$1234
 
-*    MOVEM.W   A1-A7,$12345678
+    MOVEM.W   A1-A7,$12345678
 
-*    MOVEM.L   D1-D7,$12345678
+    MOVEM.L   D1-D7,$12345678
 
-*    MOVEM.W   A1/D7,$12345678
+    MOVEM.W   A1/D7,$12345678
 
-*    MOVEM.L   A1/D7,$12345678
+    MOVEM.L   A1/D7,$12345678
 
-*    MOVEM.W   $12,A1-A7
+    MOVEM.W   $12,A1-A7
 
-*    MOVEM.L   $12,D1-D7
+    MOVEM.L   $12,D1-D7
 
-*    MOVEM.W   $12,A1/D7
+    MOVEM.W   $12,A1/D7
 
-*    MOVEM.L   $12,A1/D7
+    MOVEM.L   $12,A1/D7
 
-*    MOVEM.W   $1234,A1-A7
+    MOVEM.W   $1234,A1-A7
 
-*    MOVEM.L   $1234,D1-D7
+    MOVEM.L   $1234,D1-D7
 
-*    MOVEM.W   $1234,A1/D7
+    MOVEM.W   $1234,A1/D7
 
-*    MOVEM.L   $1234,A1/D7
+    MOVEM.L   $1234,A1/D7
 
-*    MOVEM.W   $12345678,A1-A7
+    MOVEM.W   $12345678,A1-A7
 
-*    MOVEM.L   $12345678,D1-D7
+    MOVEM.L   $12345678,D1-D7
 
-*    MOVEM.W   $12345678,A1/D7
+    MOVEM.W   $12345678,A1/D7
 
-*    MOVEM.L   $12345678,A1/D7
+    MOVEM.L   $12345678,A1/D7
 
     ADDA.W    $12,A2
     ADDA.W    $1234,A2
@@ -545,3 +544,9 @@ label4
 
 *    ~Tab size~4~
 
+
+
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~

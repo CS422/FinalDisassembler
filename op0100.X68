@@ -1,14 +1,3 @@
-*    -----------------------------------------------------------
-
-*    Title      :
-
-*    Written by :
-
-*    Date       :
-
-*    Description:
-
-*    -----------------------------------------------------------
 
 op0100      *MOVEM, JSR,LEA,RTS,NOP
 *    -CLR and MOVEM CHECK if its CLR or moveM
@@ -61,74 +50,68 @@ op0100      *MOVEM, JSR,LEA,RTS,NOP
     CMP.B   #7,D2
     BEQ     _LEA        branch to LEA
     
-*    JSR check_clr_or_moveM
+    JSR check_clr_or_moveM
 
-*    CMP.B   #hex_8,D3
+    CMP.B   #hex_8,D3
 
-*    BEQ     clr_B   ;clr.B
+    BEQ     clr_B   ;clr.B
 
-*    CMP.B   #hex_9,D3
+    CMP.B   #hex_9,D3
 
-*    BEQ     clr_W   ;clr.W
+    BEQ     clr_W   ;clr.W
 
-*    CMP.B   #hex_A,D3
+    CMP.B   #hex_A,D3
 
-*    BEQ     clr_L   ;clr.L
+    BEQ     clr_L   ;clr.L
 
     
-    
-    CMP.B   #hex_2,D3    ;see if it's a MOVEM.W
 
-    BEQ     _movemW     ;branch   
-
-    CMP.B   #$4,D3    ;see if it's a MOVEM.L
-
-    BEQ     _movemL
 
 *    ---------------------------------------------------------
 
 *    Check JSR  
 
 *    ---------------------------------------------------------
-
 *    1. $4EB8 constant value => (XXX).W
-
     CMP.W   #$4EB8,D6   ;see if it's a JSR
     BEQ     _JSR
 *    2. $4EB9 constant value => (XXX).L
-
     CMP.W   #$4EB9,D6   ;see if it's a JSR
     BEQ     _JSR
 *    3. $4EA0 ~ $4EA7        => (An)
-
     CMP.W   #$4EA7,D6   ;see if it's a JSR
-    BLS     _JSR
-    ;branch
-*    determine if contents in D3 are a word or long ---------- 
-
-    ;JSR     WorL
+    BEQ     _JSR
+    CMP.W   #$4EA6,D6   ;see if it's a JSR
+    BEQ     _JSR
+    CMP.W   #$4EA5,D6   ;see if it's a JSR
+    BEQ     _JSR
+    CMP.W   #$4EA4,D6   ;see if it's a JSR
+    BEQ     _JSR
+    CMP.W   #$4EA3,D6   ;see if it's a JSR
+    BEQ     _JSR
+    CMP.W   #$4EA2,D6   ;see if it's a JSR
+    BEQ     _JSR
+    CMP.W   #$4EA1,D6   ;see if it's a JSR
+    BEQ     _JSR
+    CMP.W   #$4EA0,D6   ;see if it's a JSR
+    BEQ     _JSR
 *    ---------------------------------------------------------
-
-    ;CMP.B   #hex7,D3    ;see if it's a LEA
-    ;BEQ     _lea        ;branch
-    
-*    determine if contents in D3 are either CLR or MOVEM ----- 
-
-    ;JSR     clrORmm
+*    Check MOVEM
 *    ---------------------------------------------------------
-
-    ;CMP.B   #hex2,D3    ;see if it's a MOVEM.W
-    ;BEQ     _movemW     ;branch
-    ;CMP.B   #hex3,D3    ;see if it's a MOVEM.L
-    ;BEQ     _movemL     ;branch
-    
-    ;BRA     opError     ;bad opcode branch to error
+    CLR.L   D0
+    MOVE.B  D6,D0           *X** **** 
+    CLR.L   D1
+    LSL.B   #1,D1           X*** ***0
+    LSR.B   #7,D1           0000 000X
+    CMP.B   #0,D1              
+*   1. bit 6 : 0 => movem.W   
+    BEQ     _movemW     ;branch   
+*   1. bit 6 : 1 => movem.L
+    BNE     _movemL
     
     
 *    ---------------------------------------------------------    
 _movemW
-
-    MOVE.B  #' ',(A2)+
     MOVE.B  #'M',(A2)+      ;print spaces
     MOVE.B  #'O',(A2)+      ;print R
     MOVE.B  #'V',(A2)+      ;print T
@@ -142,8 +125,6 @@ _movemW
 
 *    ---------------------------------------------------------
 _movemL
-
-    MOVE.B  #' ',(A2)+      ;print spaces
     MOVE.B  #'M',(A2)+      ;print spaces
     MOVE.B  #'O',(A2)+      ;print R
     MOVE.B  #'V',(A2)+      ;print T
@@ -170,17 +151,22 @@ DecodeDr
     CMP.B   #0,D1           
     BEQ     RtoM            
     JSR     MtoR       
-
-    
 *    ---------------------------------------------------------
 RtoM
-    MOVE.B  #',',(A2)+
-    CMP.B   #4,D2       
+*decode bit 3 to 5 
+    CLR.L   D2
+    MOVE.B  D6,D2
+    LSL.B   #2,D2
+    LSR.B   #5,D2
+    CMP.B   #4,D2 
+*1. bit3to5: 4 => decodeListDesc      
     BEQ     decodeListDesc      predecrement
+*2. bit3to5: NOT 4 => decodeListAsc       
     BNE     decodeListAsc       both controlmode/postincrement
-
 *    ---------------------------------------------------------
 RtoMEA
+    MOVE.B  #',',(A2)+
+*    ---------------------------------------------------------
     JSR     get_3to5_bit
     JSR     get_0to2_bit    
 *    ---------------------------------------------------------
@@ -243,7 +229,7 @@ FindSmallestD
     LSR.W   #1,D5
     ADD.B   #1,D2           increment
     CMP.B   #8,D2           end of the loop compare
-    BEQ     setupFindSA    end of the loop
+    BGE     setupFindSA    end of the loop
     BNE     FindSmallestD   
 FoundSD
 *print
@@ -275,7 +261,7 @@ FindSA
     LSR.W   #1,D5
     ADD.B   #1,D2       increment
     CMP.B   #8,D2       end of the loop compare
-    BEQ     AfterList    end of the decodeListDesc
+    BGE     AfterList    end of the decodeListDesc
     BNE     FindSA
     
 FoundSA
@@ -306,7 +292,7 @@ FindLargestA
     LSL.W   #1,D5
     ADD.B   #1,D2           increment
     CMP.B   #8,D2           end of the loop compare
-    BEQ     setupFindLargestD    end of the loop
+    BGE     setupFindLargestD    end of the loop
     BNE     FindLargestA
     
 FoundLA
@@ -339,7 +325,7 @@ FindLargestD
     LSL.W   #1,D5
     ADD.B   #1,D2       increment
     CMP.B   #8,D2       end of the loop compare
-    BEQ     AfterList    end of the decodeListDesc
+    BGE     AfterList    end of the decodeListDesc
     BNE     FindLargestD   
 FoundLD
 *print
@@ -355,6 +341,7 @@ FoundLD
     BRA     FindLargestD
 *    ------------------------------------------------------------ 
 AfterList    
+    MOVE.B  #' ',-(A2)
     CMP.B   #0,D7
     BEQ     RtoMEA          RtoM
     BNE     printCode       MtoR
@@ -605,6 +592,7 @@ check_clr_or_moveM:
 *    ~Tab type~1~
 
 *    ~Tab size~4~
+
 
 
 
