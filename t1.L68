@@ -1,0 +1,37 @@
+00009000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.04
+Created On: 6/1/2017 7:07:28 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :
+00000000                             3  * Written by :
+00000000                             4  * Date       :
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00000000                             7  
+00000000  =00009000                  8  start       EQU $00009000   * ORG and END address
+00000000                             9  
+00000000                            10  *    ORG the program so that it straddles the address boundary $00007FFF to $00008000
+00000000                            11  
+00000000                            12  
+00009000                            13          ORG start
+00009000                            14  
+00009000                            15  * Put program code here
+00009000                            16  
+00009000  4C92 FE07                 17          MOVEM.W (A2),A1-A7/D0-D2
+00009004                            18  
+00009004                            19  
+00009004  FFFF FFFF                 20      SIMHALT             ; halt simulator
+00009008                            21  
+00009008                            22  * Put variables and constants here
+00009008                            23  
+00009008                            24      END    START        ; last line of source
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+START               9000

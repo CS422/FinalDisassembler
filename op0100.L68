@@ -1,0 +1,608 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.04
+Created On: 6/1/2017 7:16:51 PM
+
+00000000                             1  *    -----------------------------------------------------------
+00000000                             2  
+00000000                             3  *    Title      :
+00000000                             4  
+00000000                             5  *    Written by :
+00000000                             6  
+00000000                             7  *    Date       :
+00000000                             8  
+00000000                             9  *    Description:
+00000000                            10  
+00000000                            11  *    -----------------------------------------------------------
+00000000                            12  
+00000000                            13  op0100      *MOVEM, JSR,LEA,RTS,NOP
+00000000                            14  *    -CLR and MOVEM CHECK if its CLR or moveM
+00000000  14FC 0020                 15      MOVE.B  #' ',(A2)+      ;print spaces
+00000004  14FC 0020                 16      MOVE.B  #' ',(A2)+      ;print spaces
+00000008  14FC 0020                 17      MOVE.B  #' ',(A2)+      ;print spaces
+0000000C  14FC 0020                 18      MOVE.B  #' ',(A2)+      ;print spaces
+00000010                            19  *    
+00000010                            20  
+00000010                            21  *    
+00000010                            22  
+00000010                            23  *    CMP.B   #hex_2,D3
+00000010                            24  
+00000010                            25  *    BEQ     moveM_W ;MOVEM.W
+00000010                            26  
+00000010                            27  *    
+00000010                            28  
+00000010                            29  *    CMP.B   #hex_3,D3
+00000010                            30  
+00000010                            31  *    BEQ     moveM_L ;MOVEM.L
+00000010                            32  
+00000010                            33  
+00000010                            34  *    ---------------------------------------------------------
+00000010                            35  
+00000010                            36  *    Check NOP - $4E71 constant value
+00000010                            37  
+00000010                            38  *    ---------------------------------------------------------  
+00000010                            39  
+00000010  BC7C 4E71                 40      CMP.W   #$4E71,D6
+00000014  6700 019A                 41      BEQ     _NOP
+00000018                            42  *    ---------------------------------------------------------
+00000018                            43  
+00000018                            44  *    Check RTS - $4E75 constant value
+00000018                            45  
+00000018                            46  *    ---------------------------------------------------------
+00000018                            47  
+00000018  BC7C 4E75                 48      CMP.W   #$4E75,D6   ;see if it's a RTS
+0000001C  6700 01B8                 49      BEQ     _RTS        branch to RTS
+00000020                            50  *    ---------------------------------------------------------
+00000020                            51  
+00000020                            52  *    Check LEA - 6to8 bit %111
+00000020                            53  
+00000020                            54  *    ---------------------------------------------------------
+00000020                            55  
+00000020  4242                      56      CLR     D2
+00000022  3406                      57      MOVE.W  D6,D2       MOVE the original machine code to D2 to play with
+00000024  EF4A                      58      LSL.W   #7,D2       BIT* **** **** 0000
+00000026  E04A                      59      LSR.W   #8,D2       0000 0000 BIT* ****
+00000028  EA4A                      60      LSR.W   #5,D2       0000 0000 0000 0BIT
+0000002A  B43C 0007                 61      CMP.B   #7,D2
+0000002E  6700 01CC                 62      BEQ     _LEA        branch to LEA
+00000032                            63      
+00000032                            64  *    JSR check_clr_or_moveM
+00000032                            65  
+00000032                            66  *    CMP.B   #hex_8,D3
+00000032                            67  
+00000032                            68  *    BEQ     clr_B   ;clr.B
+00000032                            69  
+00000032                            70  *    CMP.B   #hex_9,D3
+00000032                            71  
+00000032                            72  *    BEQ     clr_W   ;clr.W
+00000032                            73  
+00000032                            74  *    CMP.B   #hex_A,D3
+00000032                            75  
+00000032                            76  *    BEQ     clr_L   ;clr.L
+00000032                            77  
+00000032                            78      
+00000032                            79      
+Line 80 ERROR: Undefined symbol
+00000032  B63C 008E                 80      CMP.B   #hex_2,D3    ;see if it's a MOVEM.W
+00000036                            81  
+00000036  6700 0022                 82      BEQ     _movemW     ;branch   
+0000003A                            83  
+0000003A  B63C 0004                 84      CMP.B   #$4,D3    ;see if it's a MOVEM.L
+0000003E                            85  
+0000003E  6700 0042                 86      BEQ     _movemL
+00000042                            87  
+00000042                            88  *    ---------------------------------------------------------
+00000042                            89  
+00000042                            90  *    Check JSR  
+00000042                            91  
+00000042                            92  *    ---------------------------------------------------------
+00000042                            93  
+00000042                            94  *    1. $4EB8 constant value => (XXX).W
+00000042                            95  
+00000042  BC7C 4EB8                 96      CMP.W   #$4EB8,D6   ;see if it's a JSR
+00000046  6700 0220                 97      BEQ     _JSR
+0000004A                            98  *    2. $4EB9 constant value => (XXX).L
+0000004A                            99  
+0000004A  BC7C 4EB9                100      CMP.W   #$4EB9,D6   ;see if it's a JSR
+0000004E  6700 0218                101      BEQ     _JSR
+00000052                           102  *    3. $4EA0 ~ $4EA7        => (An)
+00000052                           103  
+00000052  BC7C 4EA7                104      CMP.W   #$4EA7,D6   ;see if it's a JSR
+00000056  6300 0210                105      BLS     _JSR
+0000005A                           106      ;branch
+0000005A                           107  *    determine if contents in D3 are a word or long ---------- 
+0000005A                           108  
+0000005A                           109      ;JSR     WorL
+0000005A                           110  *    ---------------------------------------------------------
+0000005A                           111  
+0000005A                           112      ;CMP.B   #hex7,D3    ;see if it's a LEA
+0000005A                           113      ;BEQ     _lea        ;branch
+0000005A                           114      
+0000005A                           115  *    determine if contents in D3 are either CLR or MOVEM ----- 
+0000005A                           116  
+0000005A                           117      ;JSR     clrORmm
+0000005A                           118  *    ---------------------------------------------------------
+0000005A                           119  
+0000005A                           120      ;CMP.B   #hex2,D3    ;see if it's a MOVEM.W
+0000005A                           121      ;BEQ     _movemW     ;branch
+0000005A                           122      ;CMP.B   #hex3,D3    ;see if it's a MOVEM.L
+0000005A                           123      ;BEQ     _movemL     ;branch
+0000005A                           124      
+0000005A                           125      ;BRA     opError     ;bad opcode branch to error
+0000005A                           126      
+0000005A                           127      
+0000005A                           128  *    ---------------------------------------------------------    
+0000005A                           129  _movemW
+0000005A                           130  
+0000005A  14FC 0020                131      MOVE.B  #' ',(A2)+
+0000005E  14FC 004D                132      MOVE.B  #'M',(A2)+      ;print spaces
+00000062  14FC 004F                133      MOVE.B  #'O',(A2)+      ;print R
+00000066  14FC 0056                134      MOVE.B  #'V',(A2)+      ;print T
+0000006A  14FC 0045                135      MOVE.B  #'E',(A2)+      ;print S
+0000006E  14FC 004D                136      MOVE.B  #'M',(A2)+      ;print spaces
+00000072  14FC 002E                137      MOVE.B  #'.',(A2)+      ;print spaces
+00000076  14FC 0057                138      MOVE.B  #'W',(A2)+      ;print spaces
+0000007A  14FC 0020                139      MOVE.B  #' ',(A2)+      ;print spaces
+0000007E                           140  
+0000007E  6000 002A                141      BRA decodeMOVEM
+00000082                           142  
+00000082                           143  *    ---------------------------------------------------------
+00000082                           144  _movemL
+00000082                           145  
+00000082  14FC 0020                146      MOVE.B  #' ',(A2)+      ;print spaces
+00000086  14FC 004D                147      MOVE.B  #'M',(A2)+      ;print spaces
+0000008A  14FC 004F                148      MOVE.B  #'O',(A2)+      ;print R
+0000008E  14FC 0056                149      MOVE.B  #'V',(A2)+      ;print T
+00000092  14FC 0045                150      MOVE.B  #'E',(A2)+      ;print S
+00000096  14FC 004D                151      MOVE.B  #'M',(A2)+      ;print spaces
+0000009A  14FC 002E                152      MOVE.B  #'.',(A2)+      ;print spaces
+0000009E  14FC 004C                153      MOVE.B  #'L',(A2)+      ;print spaces
+000000A2  14FC 0020                154      MOVE.B  #' ',(A2)+      ;print spaces
+000000A6                           155  
+000000A6  6000 0002                156      BRA decodeMOVEM
+000000AA                           157  *    ---------------------------------------------------------
+000000AA                           158  decodeMOVEM
+000000AA                           159      * decode bit 10 for direction
+000000AA  4280                     160      CLR.L   D0
+000000AC  3006                     161      MOVE.W  D6,D0           **** *X** **** **** 
+000000AE  4840                     162      SWAP    D0              **** **** **** *X**
+000000B0  4281                     163      CLR.L   D1
+000000B2  1200                     164      MOVE.B  D0,D1           *X**
+000000B4  E309                     165      LSL.B   #1,D1           X**0
+000000B6  E609                     166      LSR.B   #3,D1           000X
+000000B8  B23C 0001                167      CMP.B   #1,D1           
+000000BC  6700 0006                168      BEQ     RtoM
+000000C0  6600 00BE                169      BNE     MtoR
+000000C4                           170  *    ---------------------------------------------------------
+000000C4                           171  RtoM
+000000C4  4EB9 000000F4            172      JSR     decodeListRtoM
+000000CA                           173  *    ---------------------------------------------------------
+Line 174 ERROR: Undefined symbol
+000000CA  4EB9 004DBB8E            174      JSR     get_3to5_bit
+Line 175 ERROR: Undefined symbol
+000000D0  4EB9 004DBB8E            175      JSR     get_0to2_bit    
+000000D6                           176  *    ---------------------------------------------------------
+000000D6                           177  *    Only Absolute addressing
+000000D6  B43C 0007                178      CMP.B   #7,D2
+000000DA  6700 0006                179      BEQ     immAbRtoM
+000000DE                           180  *    ---------------------------------------------------------
+000000DE                           181  *    end of decoding
+000000DE                           182  *    ------------------------------------------------------------
+000000DE                           183  *    printing  
+Line 184 ERROR: Undefined symbol
+000000DE  6000 BAAE                184      BRA printCode
+000000E2                           185  *    ------------------------------------------------------------
+000000E2                           186  immAbRtoM
+Line 187 ERROR: Undefined symbol
+000000E2  4DF9 004DBB8E            187      LEA     immAbTable, A6
+000000E8  C2FC 0008                188      MULU    #8,D1
+000000EC  4EB6 1000                189      JSR     (A6,D1)
+Line 190 ERROR: Undefined symbol
+000000F0  6000 BA9C                190      BRA     printCode
+000000F4                           191  *    ------------------------------------------------------------
+000000F4                           192  
+000000F4                           193  *    End of RtoM
+000000F4                           194  *    ------------------------------------------------------------
+000000F4                           195  decodeListRtoM
+000000F4                           196  * bit 7 to 0, going A0 to A7
+000000F4  2A04                     197      MOVE.L  D4,D5
+000000F6  E08D                     198      LSR.L   #8,D5
+000000F8  E08D                     199      LSR.L   #8,D5
+000000FA  4282                     200      CLR.L   D2
+000000FC                           201  FindLargestA
+000000FC  3605                     202      MOVE.W  D5,D3
+000000FE  C67C 00F0                203      AND.W   #$F0,D3
+00000102  EE4B                     204      LSR.W   #7,D3
+00000104  B63C 0001                205      CMP.B   #1,D3
+00000108  6700 000E                206      BEQ     FoundLA
+0000010C  5202                     207      ADD.B   #1,D2           increment
+0000010E  B43C 0008                208      CMP.B   #8,D2           end of the loop compare
+00000112  6700 0024                209      BEQ     setupFindLargestD    end of the loop
+00000116  66E4                     210      BNE     FindLargestA
+00000118                           211      
+00000118                           212  FoundLA
+00000118                           213  *print
+00000118  14FC 0041                214      MOVE.B  #'A',(A2)+
+Line 215 ERROR: Undefined symbol
+0000011C  4DF9 004DBB8E            215      LEA     numTable,A6
+00000122  4280                     216      CLR.L   D0
+00000124  1002                     217      MOVE.B  D2,D0
+00000126  C1FC 0008                218      MULS    #8,D0
+0000012A  4EB6 0000                219      JSR     (A6,D0)
+0000012E  14FC 002F                220      MOVE.B  #'/',(A2)+
+00000132  5202                     221      ADD.B   #1,D2       increment
+00000134  E34D                     222      LSL.W   #1,D5
+00000136  60C4                     223      BRA     FindLargestA
+00000138                           224  *    ------------------------------------------------------------    
+00000138                           225  * bit 15 to 8, going D0 to D7
+00000138                           226  setupFindLargestD    
+00000138  2A04                     227      MOVE.L  D4,D5
+0000013A  E08D                     228      LSR.L   #8,D5
+0000013C  E08D                     229      LSR.L   #8,D5
+0000013E  E08D                     230      LSR.L   #8,D5
+00000140  4282                     231      CLR.L   D2
+00000142  4283                     232      CLR.L   D3
+00000144                           233  FindLargestD
+00000144  3605                     234      MOVE.W  D5,D3
+00000146  C67C 00F0                235      AND.W   #$F0,D3
+0000014A  EE4B                     236      LSR.W   #7,D3
+0000014C  B63C 0001                237      CMP.B   #1,D3
+00000150  6700 000E                238      BEQ     FoundLD
+00000154  5202                     239      ADD.B   #1,D2       increment
+00000156  B43C 0008                240      CMP.B   #8,D2       end of the loop compare
+Line 241 ERROR: Undefined symbol
+0000015A  6700 BA32                241      BEQ     printCode   end of the loop
+0000015E  66E4                     242      BNE     FindLargestD
+00000160                           243      
+00000160                           244  FoundLD
+00000160                           245  *print
+00000160  14FC 0044                246      MOVE.B  #'D',(A2)+
+Line 247 ERROR: Undefined symbol
+00000164  4DF9 004DBB8E            247      LEA     numTable,A6
+0000016A  4280                     248      CLR.L   D0
+0000016C  1002                     249      MOVE.B  D2,D0
+0000016E  C1FC 0008                250      MULS    #8,D0
+00000172  4EB6 0000                251      JSR     (A6,D0)
+00000176  14FC 002F                252      MOVE.B  #'/',(A2)+
+0000017A  5202                     253      ADD.B   #1,D2       increment
+0000017C  E34D                     254      LSL.W   #1,D5
+0000017E  60C4                     255      BRA     FindLargestD
+00000180                           256  *    ------------------------------------------------------------ 
+00000180                           257  MtoR    
+00000180                           258  *    ---------------------------------------------------------
+Line 259 ERROR: Undefined symbol
+00000180  4EB9 004DBB8E            259      JSR     get_3to5_bit
+Line 260 ERROR: Undefined symbol
+00000186  4EB9 004DBB8E            260      JSR     get_0to2_bit    
+0000018C                           261  *    ---------------------------------------------------------
+0000018C                           262  *    Only Absolute addressing
+0000018C  B43C 0007                263      CMP.B   #7,D2
+00000190  6700 000C                264      BEQ     immAbMtoR
+00000194                           265  *    ---------------------------------------------------------
+00000194  14FC 002C                266      MOVE.B  #',',(A2)+
+00000198  4EB9 000001B0            267      JSR     decodeListMtoR
+0000019E                           268  *    ---------------------------------------------------------
+0000019E                           269  *    end of decoding
+0000019E                           270  *    ------------------------------------------------------------
+0000019E                           271  immAbMtoR
+Line 272 ERROR: Undefined symbol
+0000019E  4DF9 004DBB8E            272      LEA     immAbTable, A6
+000001A4  C2FC 0008                273      MULU    #8,D1
+000001A8  4EB6 1000                274      JSR     (A6,D1)
+Line 275 ERROR: Undefined symbol
+000001AC  6000 B9E0                275      BRA     printCode
+000001B0                           276  *    ------------------------------------------------------------
+000001B0                           277  *    End of RtoM
+000001B0                           278  *    ------------------------------------------------------------
+000001B0                           279  decodeListMtoR
+000001B0                           280  *    ------------------------------------------------------------
+000001B0                           281  
+000001B0                           282      
+000001B0                           283      
+000001B0                           284      
+000001B0                           285  *    ------------------------------------------------------------
+000001B0                           286  
+000001B0                           287  
+000001B0                           288  *    NOP subroutine
+000001B0                           289  
+000001B0                           290  *    ---------------------------------------------------------           
+000001B0                           291  
+000001B0                           292  _NOP
+000001B0  7E02                     293      MOVE.L  #2,D7       ;data is not error
+000001B2  14FC 0020                294      MOVE.B  #' ',(A2)+      ;print spaces
+000001B6  14FC 0020                295      MOVE.B  #' ',(A2)+      ;print spaces
+000001BA  14FC 0020                296      MOVE.B  #' ',(A2)+      ;print spaces
+000001BE  14FC 0020                297      MOVE.B  #' ',(A2)+      ;print spaces
+000001C2  14FC 004E                298      MOVE.B  #'N',(A2)+      ;print N
+000001C6  14FC 004F                299      MOVE.B  #'O',(A2)+      ;print O
+000001CA  14FC 0050                300      MOVE.B  #'P',(A2)+      ;print P
+000001CE  1A3C 0003                301      MOVE.B  #3,D5           ;counter for output
+Line 302 ERROR: Undefined symbol
+000001D2  6000 B9BA                302      BRA     printCode
+000001D6                           303  *    ---------------------------------------------------------
+000001D6                           304  
+000001D6                           305  *    RTS subroutine
+000001D6                           306  
+000001D6                           307  *    ---------------------------------------------------------
+000001D6                           308  
+000001D6                           309  _RTS    
+000001D6  7E02                     310      MOVE.L  #2,D7       ;data is not error
+000001D8  14FC 0020                311      MOVE.B  #' ',(A2)+      ;print spaces
+000001DC  14FC 0020                312      MOVE.B  #' ',(A2)+      ;print spaces
+000001E0  14FC 0020                313      MOVE.B  #' ',(A2)+      ;print spaces
+000001E4  14FC 0020                314      MOVE.B  #' ',(A2)+      ;print spaces
+000001E8  14FC 0052                315      MOVE.B  #'R',(A2)+      ;print R
+000001EC  14FC 0054                316      MOVE.B  #'T',(A2)+      ;print T
+000001F0  14FC 0053                317      MOVE.B  #'S',(A2)+      ;print S
+000001F4  1A3C 0003                318      MOVE.B  #3,D5           ;counter for output
+Line 319 ERROR: Undefined symbol
+000001F8  6000 B994                319      BRA     printCode
+000001FC                           320  *    ---------------------------------------------------------
+000001FC                           321  
+000001FC                           322  *    LEA subroutine
+000001FC                           323  
+000001FC                           324  *    ---------------------------------------------------------
+000001FC                           325  
+000001FC                           326  _LEA    
+000001FC  7E02                     327      MOVE.L  #2,D7       ;data is not error
+000001FE  14FC 0020                328      MOVE.B  #' ',(A2)+      ;print spaces
+00000202  14FC 0020                329      MOVE.B  #' ',(A2)+      ;print spaces
+00000206  14FC 0020                330      MOVE.B  #' ',(A2)+      ;print spaces
+0000020A  14FC 0020                331      MOVE.B  #' ',(A2)+      ;print spaces
+0000020E  14FC 004C                332      MOVE.B  #'L',(A2)+      ;print R
+00000212  14FC 0045                333      MOVE.B  #'E',(A2)+      ;print T
+00000216  14FC 0041                334      MOVE.B  #'A',(A2)+      ;print S
+0000021A  14FC 0020                335      MOVE.B  #' ',(A2)+      ;print spaces
+0000021E  14FC 0020                336      MOVE.B  #' ',(A2)+      ;print spaces
+00000222  14FC 0020                337      MOVE.B  #' ',(A2)+      ;print spaces
+00000226  14FC 0020                338      MOVE.B  #' ',(A2)+      ;print spaces
+0000022A  1A3C 0003                339      MOVE.B  #3,D5           ;counter for output
+0000022E                           340  *    ---------------------------------------------------------
+0000022E                           341  
+Line 342 ERROR: Undefined symbol
+0000022E  4EB9 004DBB8E            342      JSR     get_3to5_bit
+Line 343 ERROR: Undefined symbol
+00000234  4EB9 004DBB8E            343      JSR     get_0to2_bit
+0000023A                           344  *    ---------------------------------------------------------            
+0000023A                           345  
+0000023A                           346  *    Check D2: mode value for immediate or Absolute addressing
+0000023A                           347  
+0000023A  B43C 0007                348      CMP.B   #7,D2
+0000023E  6700 0162                349      BEQ     immAbLEA
+00000242                           350  *    ---------------------------------------------------------
+00000242                           351  
+00000242                           352  desDecodeLEA
+00000242  14FC 002C                353      MOVE.B  #',',(A2)+  comma between operands
+00000246                           354  *    ---------------------------------------------------------
+00000246                           355  
+Line 356 ERROR: Undefined symbol
+00000246  4DF9 004DBB8E            356      LEA     modeTable,A6
+0000024C  103C 0001                357      MOVE.B  #1,D0
+00000250  C0FC 0008                358      MULU    #8,D0       value adjusted for jumping
+Line 359 ERROR: Undefined symbol
+00000254  4DF9 004DBB8E            359      LEA     modeTable,A6 Load the table into A6
+0000025A  4EB6 0000                360      JSR     (A6,D0)     Jump to subroutine of value at D0
+0000025E                           361      
+Line 362 ERROR: Undefined symbol
+0000025E  4EB9 004DBB8E            362      JSR     get_9to11_bit
+00000264                           363  *    ---------------------------------------------------------
+00000264                           364  
+Line 365 ERROR: Undefined symbol
+00000264  6000 B928                365      BRA     printCode
+00000268                           366  *    ---------------------------------------------------------
+00000268                           367  
+00000268                           368  *    JSR subroutine
+00000268                           369  
+00000268                           370  *    ---------------------------------------------------------
+00000268                           371  
+00000268                           372  _JSR
+00000268  7E02                     373      MOVE.L  #2,D7       ;data is not error
+0000026A  14FC 0020                374      MOVE.B  #' ',(A2)+      ;print spaces
+0000026E  14FC 0020                375      MOVE.B  #' ',(A2)+      ;print spaces
+00000272  14FC 0020                376      MOVE.B  #' ',(A2)+      ;print spaces
+00000276  14FC 0020                377      MOVE.B  #' ',(A2)+      ;print spaces
+0000027A  14FC 004A                378      MOVE.B  #'J',(A2)+      ;print J
+0000027E  14FC 0053                379      MOVE.B  #'S',(A2)+      ;print S
+00000282  14FC 0052                380      MOVE.B  #'R',(A2)+      ;print R
+00000286  14FC 0020                381      MOVE.B  #' ',(A2)+      ;print spaces
+0000028A  14FC 0020                382      MOVE.B  #' ',(A2)+      ;print spaces
+0000028E  14FC 0020                383      MOVE.B  #' ',(A2)+      ;print spaces
+00000292  14FC 0020                384      MOVE.B  #' ',(A2)+      ;print spaces
+00000296  1A3C 0003                385      MOVE.B  #3,D5           ;counter for output
+Line 386 ERROR: Undefined symbol
+0000029A  4EB9 004DBB8E            386      JSR     get_3to5_bit
+Line 387 ERROR: Undefined symbol
+000002A0  4EB9 004DBB8E            387      JSR     get_0to2_bit
+000002A6                           388  *    ------------------------------------------------------------
+000002A6                           389  
+000002A6                           390  *    Check D2: mode value for immediate or Absolute addressing
+000002A6                           391  
+000002A6  B43C 0007                392      CMP.B   #7,D2
+000002AA  6700 00E4                393      BEQ     immAbJSR
+Line 394 ERROR: Undefined symbol
+000002AE  6000 B8DE                394      BRA     printCode
+000002B2                           395      
+000002B2                           396      
+000002B2                           397  *    ---------------------------CLR.B
+000002B2                           398  
+000002B2                           399  
+000002B2                           400  *    ----------------------------------------------------------- 
+000002B2                           401  
+000002B2                           402  *    CLR.B -----------------------------------------------------           
+000002B2                           403  
+000002B2                           404  clr_B       ;CLR.B
+000002B2  1606                     405      MOVE.B  D6,D3       ;copy data to D3
+000002B4  EB0B                     406      LSL.B   #5,D3       ;shift d3 to clear
+000002B6  EA0B                     407      LSR.B   #5,D3       ;shift back to bit 0-2
+000002B8  B63C 0004                408      CMP.B   #%100,D3    ;compare to immediate data
+000002BC                           409  
+000002BC                           410      ;Print/store CLR.B here
+000002BC  14FC 0020                411      MOVE.B  #' ',(A2)+
+000002C0  14FC 0020                412      MOVE.B  #' ',(A2)+
+000002C4  14FC 0020                413      MOVE.B  #' ',(A2)+
+000002C8  14FC 0020                414      MOVE.B  #' ',(A2)+
+000002CC  14FC 0043                415      MOVE.B  #'C',(A2)+  ;print C
+000002D0  14FC 004C                416      MOVE.B  #'L',(A2)+  ;print L
+000002D4  14FC 0052                417      MOVE.B  #'R',(A2)+  ;print R
+000002D8  14FC 002E                418      MOVE.B  #'.',(A2)+  ;print .
+000002DC  14FC 0042                419      MOVE.B  #'B',(A2)+  ;print B
+000002E0  14FC 0020                420      MOVE.B  #' ',(A2)+  ;print some spaces
+000002E4  14FC 0020                421      MOVE.B  #' ',(A2)+
+000002E8  14FC 0020                422      MOVE.B  #' ',(A2)+
+000002EC                           423  
+000002EC                           424      
+000002EC                           425      *-get bit 3 to 5
+Line 426 ERROR: Undefined symbol
+000002EC  4EB9 004DBB8E            426      JSR get_3to5_bit
+Line 427 ERROR: Undefined symbol
+000002F2  4EB9 004DBB8E            427      JSR get_0to2_bit
+000002F8                           428  
+000002F8                           429  
+Line 430 ERROR: Undefined symbol
+000002F8  6000 B894                430      BRA     printCode
+000002FC                           431      
+000002FC                           432      
+000002FC                           433  clr_W       ;CLR.W
+000002FC  1606                     434      MOVE.B  D6,D3       ;copy data to D3
+000002FE  EB0B                     435      LSL.B   #5,D3       ;shift d3 to clear
+00000300  EA0B                     436      LSR.B   #5,D3       ;shift back to bit 0-2
+00000302  B63C 0004                437      CMP.B   #%100,D3    ;compare to immediate data
+00000306                           438  
+00000306                           439      ;Print/store CLR.B here
+00000306  14FC 0020                440      MOVE.B  #' ',(A2)+
+0000030A  14FC 0020                441      MOVE.B  #' ',(A2)+
+0000030E  14FC 0020                442      MOVE.B  #' ',(A2)+
+00000312  14FC 0020                443      MOVE.B  #' ',(A2)+
+00000316  14FC 0043                444      MOVE.B  #'C',(A2)+  ;print C
+0000031A  14FC 004C                445      MOVE.B  #'L',(A2)+  ;print L
+0000031E  14FC 0052                446      MOVE.B  #'R',(A2)+  ;print R
+00000322  14FC 002E                447      MOVE.B  #'.',(A2)+  ;print .
+00000326  14FC 0057                448      MOVE.B  #'W',(A2)+  ;print W
+0000032A  14FC 0020                449      MOVE.B  #' ',(A2)+  ;print some spaces
+0000032E  14FC 0020                450      MOVE.B  #' ',(A2)+
+00000332  14FC 0020                451      MOVE.B  #' ',(A2)+
+00000336                           452  
+00000336                           453      
+00000336                           454      *-get bit 3 to 5
+Line 455 ERROR: Undefined symbol
+00000336  4EB9 004DBB8E            455      JSR get_3to5_bit
+Line 456 ERROR: Undefined symbol
+0000033C  4EB9 004DBB8E            456      JSR get_0to2_bit
+00000342                           457  
+Line 458 ERROR: Undefined symbol
+00000342  6000 B84A                458      BRA     printCode
+00000346                           459      
+00000346                           460  clr_L       ;CLR.L
+00000346  1606                     461      MOVE.B  D6,D3       ;copy data to D3
+00000348  EB0B                     462      LSL.B   #5,D3       ;shift d3 to clear
+0000034A  EA0B                     463      LSR.B   #5,D3       ;shift back to bit 0-2
+0000034C  B63C 0004                464      CMP.B   #%100,D3    ;compare to immediate data
+00000350                           465  
+00000350                           466      ;Print/store CLR.B here
+00000350  14FC 0020                467      MOVE.B  #' ',(A2)+
+00000354  14FC 0020                468      MOVE.B  #' ',(A2)+
+00000358  14FC 0020                469      MOVE.B  #' ',(A2)+
+0000035C  14FC 0020                470      MOVE.B  #' ',(A2)+
+00000360  14FC 0043                471      MOVE.B  #'C',(A2)+  ;print C
+00000364  14FC 004C                472      MOVE.B  #'L',(A2)+  ;print L
+00000368  14FC 0052                473      MOVE.B  #'R',(A2)+  ;print R
+0000036C  14FC 002E                474      MOVE.B  #'.',(A2)+  ;print .
+00000370  14FC 004C                475      MOVE.B  #'L',(A2)+  ;print B
+00000374  14FC 0020                476      MOVE.B  #' ',(A2)+  ;print some spaces
+00000378  14FC 0020                477      MOVE.B  #' ',(A2)+
+0000037C  14FC 0020                478      MOVE.B  #' ',(A2)+
+00000380                           479  
+00000380                           480      
+00000380                           481      *-get bit 3 to 5
+Line 482 ERROR: Undefined symbol
+00000380  4EB9 004DBB8E            482      JSR get_3to5_bit
+Line 483 ERROR: Undefined symbol
+00000386  4EB9 004DBB8E            483      JSR get_0to2_bit
+Line 484 ERROR: Undefined symbol
+0000038C  6000 B800                484      BRA     printCode
+00000390                           485  *    ------------------------------------------------------------
+00000390                           486  
+00000390                           487  immAbJSR
+00000390                           488  *    Absolute addressing only
+00000390                           489  
+Line 490 ERROR: Undefined symbol
+00000390  4DF9 004DBB8E            490      LEA     immAbTable, A6
+00000396  C2FC 0008                491      MULU    #8,D1
+0000039A  4EB6 1000                492      JSR     (A6,D1)
+Line 493 ERROR: Undefined symbol
+0000039E  6000 B7EE                493      BRA     printCode
+000003A2                           494  immAbLEA
+000003A2                           495  *    Absolute addressing only
+000003A2                           496  
+Line 497 ERROR: Undefined symbol
+000003A2  4DF9 004DBB8E            497      LEA     immAbTable, A6
+000003A8  C2FC 0008                498      MULU    #8,D1
+000003AC  4EB6 1000                499      JSR     (A6,D1)
+000003B0  6000 FE90                500      BRA     desDecodeLEA
+000003B4                           501  *    ------------------------------------------------------------
+000003B4                           502  check_clr_or_moveM:
+000003B4  4283                     503      CLR.L   D3
+000003B6  3606                     504      MOVE.W  D6,D3
+000003B8  C67C 0FF0                505      AND.W   #$0FF0,D3
+000003BC  EC4B                     506      LSR.W   #6,D3
+000003BE  C67C 000F                507      AND.W   #$000F,D3
+000003C2  4E75                     508      RTS
+000003C4                           509  *    -----------------------------------------------------------
+000003C4                           510  
+000003C4                           511  
+000003C4                           512  
+000003C4                           513  
+000003C4                           514  *    ------------------------------------------------------------
+000003C4                           515  *       End of file
+000003C4                           516  *    ------------------------------------------------------------
+000003C4                           517  
+000003C4                           518  
+000003C4                           519  
+000003C4                           520  
+000003C4                           521  
+000003C4                           522  
+000003C4                           523  
+000003C4                           524  *    ~Font name~Courier New~
+000003C4                           525  
+000003C4                           526  *    ~Font size~10~
+000003C4                           527  
+000003C4                           528  *    ~Tab type~1~
+000003C4                           529  
+000003C4                           530  *    ~Tab size~4~
+000003C4                           531  
+000003C4                           532  
+000003C4                           533  
+Line 534 WARNING: END directive missing, starting address not set
+
+36 errors detected
+1 warning generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+CHECK_CLR_OR_MOVEM  3B4
+CLR_B               2B2
+CLR_L               346
+CLR_W               2FC
+DECODELISTMTOR      1B0
+DECODELISTRTOM      F4
+DECODEMOVEM         AA
+DESDECODELEA        242
+FINDLARGESTA        FC
+FINDLARGESTD        144
+FOUNDLA             118
+FOUNDLD             160
+IMMABJSR            390
+IMMABLEA            3A2
+IMMABMTOR           19E
+IMMABRTOM           E2
+MTOR                180
+OP0100              0
+RTOM                C4
+SETUPFINDLARGESTD   138
+_JSR                268
+_LEA                1FC
+_MOVEML             82
+_MOVEMW             5A
+_NOP                1B0
+_RTS                1D6
