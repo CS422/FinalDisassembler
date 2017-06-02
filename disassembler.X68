@@ -210,39 +210,6 @@ START:
     
     
     
-*    ---move_addresses:
-
-    
-    *-MOVE 2 INTO DATA REG
-    
-    ;JSR     LOOP
-    *----LEA     good_code_buffer,a2 ;load the code buffer
-    *-STORE THE OLD ADDRESS/STARTING/CURRENT INTO
-    
-    *----MOVE.W  A4,A0
-    
-    *-STORE 2 AT DATA REG MAYBE FOR INCREMNTEATION
-    *----MOVE.B  #2,D4
-    
-    *-MOVE OLD ADDRESS TO DATA REGISTER
-    *-----MOVE.L  A0,D3   ;D3 IS USED TO PRINT OUT THE ADDRESS LINE, OR ANYTHING IN D3
-    *------MOVE.L  D3,D7
-    
-
-
-
-    *------LEA     good_code_buffer,A2 load again
-    *------JSR     print_d3
-    
-    
-    ;JSR     get_opcode
-
-    *----MIGHT NEED TO CHECK FOR ODD ADDRESSING ?
-    *----CHECK FOR ADDRESS OUT OF BOUNDS DOMAIN?
-    ;SIMHALT
-
-
-*    ---------------------------------------------------------- 
 
 *    Decode ---------------------------------------------------
 
@@ -376,63 +343,7 @@ mainLoop
 
     BRA     opERROR     ;invalid opcode display we havent implemented this code yet
     
-    ;branch to display opError display
-    
-    ;print all the things...
- *******************************************************************************
-*    
 
-
-*    
-
-*    
-
-*    
-
-lineCount
-    LEA     line_counter,A2    * Set up A2 ptr as linecount
-    ADDI.B  #$1,(A2)    * Increment the number of lines by one
-    CMP.B   #30,(A2)    * Now check if the lines hit 30
-    BEQ     halt        * Pause the page if it is full
-    RTS                 * If counter isnt at 31 then go back to
-    
-    
-*    this will halt the program and ask user to continue
-
-halt
-    CLR     D1
-    MOVE.B  #00,(A2)     * Reset the counter then display message
-    LEA     hitEnter,A1  * Load lower address prompt
-    MOVE.B  enterBuf,D1  * Load lower prompt length
-    MOVE.L  #1,D0        * Load task code for prompt
-    TRAP    #15          * Display user prompt
-    LEA     haltEntry,A1    * Load address to store user input
-    MOVE.L  #2,D0       * Load task code for user input
-    TRAP    #15         * Retrieve input
-    RTS                 * Return to the main program loop
-    
-*    
-
-*    
-
-*    
-
-*    
-
-addressCount 
-    *-THIS LOCATION IS WHERE WE WILL PERIODICALLY CHECK THE RUNNING A4 REGISTERY WITH OUR STORED
-    *-ENDING ADDRESS VALUE TO SEE IF WE HAVE REACHED THE END OF OUR ADDRESS RANGE
-    *-A4 IS ALSO ACTS AS OUR 'I' VALUE OR OUR VALUE THAT KEEPS POINTING TO MEMORY LOCATIONS
-    *-wE CAN USE THIS POINTER TO ACCESS DATA FURTHURE DOWN, THE END ADDRESS WE DO NOT NEED TO KEEP
-    *-TRACK OF CONSTANTLY SO WE CAN STORE INTO MEMORY AND RETRIEVE FROM MEMORY WHEN WE NEED IT
-    
-    LEA   $00FFFF10,A5  * RETRIEVE ENDING ADDRESS(THE LESASH /POINTER TO ENGIND ADDRESS
-    MOVE.L  (A5),D1     * MOVE THE DATA STORED AT THE POINTER TO DATA REGISTER
-    MOVE.L  A4,D5       * MOVE OPUR CURRENT POINTER 'I' FROM ADDRESS REGISTER TO DATA REGISTER
-    CMP.L   D5,D1       * COMPARE THE ADDRESSES
-    BLE     FINISH      * branch to end if ending address reached
-    RTS                 * return IF WE HAVE NOT FINISHED
-    
 get_next_instruction:
     JSR addressCount    *-CHECKS IF WE REACHED OUT ENDING ADDRESS YET
     *-line count
@@ -1478,7 +1389,50 @@ FINISH:
     SIMHALT
 
 
+*--------------------------------SECONTION FOR IO -----------
+RESTART     
+        MOVE.B  #11, D0             Task 11 - Clear screen
+        MOVE.W  #$FF00, D1          Clear Screen
+        TRAP    #15                 Call Trap
+        MOVE.B  #12,D0              Keyboard echo
+        MOVE.B  #1,D1               Visible
+        TRAP    #15
+        MOVE.L  #$0000000, A0       Reset A1
+        MOVE.L  #$0000000, A1       Reset A1
+        MOVE.L  #$0000000, A2       Reset A2
+        MOVE.L  #$0000000, A3       Reset the Good Buffer
+        MOVE.L  #$0000000, A4       Reset A4
+        MOVE.L  #$0000000, A5       Reset the Starting address
+        MOVE.L  #$0000000, A6       Reset the Ending Address
+        MOVEA.L #$01000000,A7       Reset stack pointer
+        CLR.L   D1                  Reset D1
+        CLR.L   D1                  Reset D1
+        CLR.L   D2                  Reset D2
+        CLR.L   D3                  Reset D3
+        CLR.L   D4                  Reset D4
+        CLR.L   D5                  Reset D5
+        CLR.L   D6                  Reset D6
+        BRA     START               Restart the program
 
+
+ENDGETKEY
+        MOVE.B  #12,D0              Use keyboard echo trap
+        MOVE.B  #0,D1               Reset Keyboard input
+        TRAP    #15                 Reset Keyboard input
+        MOVE.B  #5, D0              Set the trap to 15 for keyboard echo
+        TRAP    #15                 Use trap
+        CMP.B   #$72, D1            Compare the key press with R
+        BEQ     RESTART             it's RESTART, restart program
+        CMP.B   #$52, D1            Compare the key press with r
+        BEQ     RESTART             it's RESTART, restart program
+        CMP.B   #$71, D1            Compare the key press with q
+        BEQ     THE_END             it's q, end program
+        CMP.B   #$51, D1            Compare the key press with Q
+        BEQ     THE_END             It's Q, end program
+        CMP.B   #$5D, D1            Check the key press with [
+        BNE     GETKEY              If it is 0, we haven't pressed the correct key
+        BRA     THE_END				Else just end the program
+*---------------------------------------------
 *-----------------------------------------------------------------
 *           I/O Section
 *----------------------------------------------------------------
@@ -1491,6 +1445,47 @@ FINISH:
 
 *    -the entered addres get's stored in d3
 
+
+lineCount
+    LEA     line_counter,A2    * Set up A2 ptr as linecount
+    ADDI.B  #$1,(A2)    * Increment the number of lines by one
+    CMP.B   #30,(A2)    * Now check if the lines hit 30
+    BEQ     halt        * Pause the page if it is full
+    RTS                 * If counter isnt at 31 then go back to
+    
+    
+*    this will halt the program and ask user to continue
+
+halt
+    CLR     D1
+    MOVE.B  #00,(A2)     * Reset the counter then display message
+    LEA     hitEnter,A1  * Load lower address prompt
+    MOVE.B  enterBuf,D1  * Load lower prompt length
+    MOVE.L  #1,D0        * Load task code for prompt
+    TRAP    #15          * Display user prompt
+    LEA     haltEntry,A1    * Load address to store user input
+    MOVE.L  #2,D0       * Load task code for user input
+    TRAP    #15         * Retrieve input
+    RTS                 * Return to the main program loop
+    
+*    
+
+*    
+
+addressCount 
+    *-THIS LOCATION IS WHERE WE WILL PERIODICALLY CHECK THE RUNNING A4 REGISTERY WITH OUR STORED
+    *-ENDING ADDRESS VALUE TO SEE IF WE HAVE REACHED THE END OF OUR ADDRESS RANGE
+    *-A4 IS ALSO ACTS AS OUR 'I' VALUE OR OUR VALUE THAT KEEPS POINTING TO MEMORY LOCATIONS
+    *-wE CAN USE THIS POINTER TO ACCESS DATA FURTHURE DOWN, THE END ADDRESS WE DO NOT NEED TO KEEP
+    *-TRACK OF CONSTANTLY SO WE CAN STORE INTO MEMORY AND RETRIEVE FROM MEMORY WHEN WE NEED IT
+    
+    LEA   $00FFFF10,A5  * RETRIEVE ENDING ADDRESS(THE LESASH /POINTER TO ENGIND ADDRESS
+    MOVE.L  (A5),D1     * MOVE THE DATA STORED AT THE POINTER TO DATA REGISTER
+    MOVE.L  A4,D5       * MOVE OPUR CURRENT POINTER 'I' FROM ADDRESS REGISTER TO DATA REGISTER
+    CMP.L   D5,D1       * COMPARE THE ADDRESSES
+    BLE     FINISH      * branch to end if ending address reached
+    RTS                 * return IF WE HAVE NOT FINISHED
+    
 parse_input     
     MOVEQ   #$0,D6  ZERO OUT THE REGISTERY
     MOVEQ   #$0,D5  ZERO OUT THE REGISTERY
