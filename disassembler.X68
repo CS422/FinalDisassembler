@@ -441,7 +441,8 @@ write_data_in_D3_to_buffer:
 
 *    
 
-immAbTable  JSR     IA000   ;Absoulute Word
+immAbTable  
+    JSR     IA000   ;Absoulute Word
     RTS             ;return, done printing
     JSR     IA001   ;Aboulute Long
     RTS             ;return, done printing
@@ -632,7 +633,8 @@ IA100                               ;immediateByte
 
 *    
 
-modeTable   JSR     M0000   ;Dn, Data Register 
+modeTable   
+    JSR     M0000   ;Dn, Data Register 
     RTS             ;return, done printing
     JSR     M0001   ;An, Address Register
     RTS             ;return, done printing
@@ -769,7 +771,8 @@ registerPrint
 
 *    
 
-regNumTable JSR     RN0000   ;register 0
+regNumTable 
+    JSR     RN0000   ;register 0
     RTS             ;return, done printing
     JSR     RN0001   ;register 1
     RTS             ;return, done printing
@@ -1031,16 +1034,11 @@ N1111
 
 
 *    HELPER LOCATION
-
 *    HELPER LOCATION
-
 *    HELPER LOCATION
-
 *    HELPER LOCATION
-
 *    HELPER LOCATION
-
-*    ------------------------------------------------------------
+*------------------------------------------------------------
 
 get_0to2_bit
 *    ------------------------------------------------------------
@@ -1248,30 +1246,24 @@ WordOrLong
     
     
     
-    *---------------------------------------------------------------
-    *--------------------------------------------------------
-    *-OPCODE SUB ROUTINE INCLUDES ( all decodes are in different files - See files
+    *------------------------------------------------------------------------------
+    *------------------------------------------------------------------------------
+    *-OPCODE SUB ROUTINE INCLUDES ( all decodes are in different files - See files)
     *-------------------------------------
     INCLUDE 'op0100.x68'    IN a different file, modulated design
     INCLUDE 'op0110.x68'    BRA,Bcc(BCC,BLT,BGE)
     INCLUDE 'op0001.x68'    MOVE.B MOVEA.B
     INCLUDE 'op0011.x68'    MOVE.W, MOVEA.W
     INCLUDE 'op0010.x68'    MOVE.L, MOVEA.L
-
     INCLUDE 'op1101.x68'    ADD,ADDA
     INCLUDE 'op1001.x68'    SUB, SUBA
     INCLUDE 'op1000.x68'    DIVU
     INCLUDE 'op0111.x68'    MOVEQ
-    
     INCLUDE 'op0000.x68'    ADDI
     INCLUDE 'op0101.x68'    SUBQ,ADDQ
     INCLUDE 'op1110.x68'    ROR,ROL,ASR,ASL,LSL,LSR
     INCLUDE 'op1100.x68'
-    
 
-
-
-    
     
 printCode   
     MOVE.B  #$00,(A2)   * add NULL value to print string
@@ -1281,10 +1273,9 @@ printCode
     TRAP    #15         * display code
     BRA     get_next_instruction
     
-    
-    
-    
-*------------------------------    OP Codes --------------------------
+
+*------------------------------- OP Codes ------------------------------
+*-----------------------------------------------------------------------
 
 bin0000     EQU     %0000   ;ADDI, ANDI, EORI, BCHG, CMPI
 bin0001     EQU     %0001   ;MOVE.B
@@ -1319,13 +1310,13 @@ hex_C   EQU     %1100 ;C
 hex_D   EQU     %1101 ;D
 hex_E   EQU     %1110 ;E
 hex_F   EQU     %1111 ;F      
-
+*--------------------------------------------------------------------------
+*--------------------------------------------------------------------------
 
 
 
 opError:                             
-*    MOVE.L  A0,D3
-*    MOVE.L  D3,D6
+
     LEA     bad_code_buffer,A2
     JSR     write_data_in_D3_to_buffer
     
@@ -1356,95 +1347,151 @@ opError:
     
     
 FINISH:
-    *INCLUDE 'opcode_subroutine.x68'
-    MOVE.L  A0,D3
-    MOVE.L  D3,D6
-    LEA     good_code_buffer,A2
- 
-    
-    MOVE.B  #'F',(A2)+      ;print spaces
-    MOVE.B  #'I',(A2)+      ;print spaces
-    MOVE.B  #'I',(A2)+      ;print spaces
-    MOVE.B  #'N',(A2)+      ;print spaces
-    MOVE.B  #'I',(A2)+      ;print D
-    MOVE.B  #'S',(A2)+      ;print A
-    MOVE.B  #'H',(A2)+      ;print T
-    MOVE.B  #'A',(A2)+      ;print A
-    MOVE.B  #'A',(A2)+      ;print spaces
-    MOVE.B  #'A',(A2)+      ;print spaces
-    MOVE.B  #'H',(A2)+      ;print spaces
-    MOVE.B  #'A',(A2)+      ;print spaces
-    MOVE.B  #'R',(A2)+
-    MOVE.L  (A0),D3
-    MOVE.L  D3,D6
-    MOVE.L  #1,D7
-
-    
-    MOVE.B  #$00,(A2) * add NULL value to print string
-    LEA     good_code_buffer,A1
-    MOVE.B  #13,D0
-    TRAP    #15
-    
+    JSR     endingDisplay
+*    MOVE.L  A0,D3
+*    MOVE.L  D3,D6
+*    LEA     good_code_buffer,A2
+* 
+*    
+*    MOVE.B  #'F',(A2)+      ;print spaces
+*    MOVE.B  #'I',(A2)+      ;print spaces
+*    MOVE.B  #'I',(A2)+      ;print spaces
+*    MOVE.B  #'N',(A2)+      ;print spaces
+*    MOVE.B  #'I',(A2)+      ;print D
+*    MOVE.B  #'S',(A2)+      ;print A
+*    MOVE.B  #'H',(A2)+      ;print T
+*    MOVE.B  #'A',(A2)+      ;print A
+*    MOVE.B  #'A',(A2)+      ;print spaces
+*    MOVE.B  #'A',(A2)+      ;print spaces
+*    MOVE.B  #'H',(A2)+      ;print spaces
+*    MOVE.B  #'A',(A2)+      ;print spaces
+*    MOVE.B  #'R',(A2)+
+*    MOVE.L  (A0),D3
+*    MOVE.L  D3,D6
+*    MOVE.L  #1,D7
+*
+*    
+*    MOVE.B  #$00,(A2) * add NULL value to print string
+*    LEA     good_code_buffer,A1
+*    MOVE.B  #13,D0
+*    TRAP    #15
+*    
     
     SIMHALT
 
 
 *--------------------------------SECONTION FOR IO -----------
-RESTART     
-        MOVE.B  #11, D0             Task 11 - Clear screen
-        MOVE.W  #$FF00, D1          Clear Screen
-        TRAP    #15                 Call Trap
-        MOVE.B  #12,D0              Keyboard echo
-        MOVE.B  #1,D1               Visible
-        TRAP    #15
-        MOVE.L  #$0000000, A0       Reset A1
-        MOVE.L  #$0000000, A1       Reset A1
-        MOVE.L  #$0000000, A2       Reset A2
-        MOVE.L  #$0000000, A3       Reset the Good Buffer
-        MOVE.L  #$0000000, A4       Reset A4
-        MOVE.L  #$0000000, A5       Reset the Starting address
-        MOVE.L  #$0000000, A6       Reset the Ending Address
-        MOVEA.L #$01000000,A7       Reset stack pointer
-        CLR.L   D1                  Reset D1
-        CLR.L   D1                  Reset D1
-        CLR.L   D2                  Reset D2
-        CLR.L   D3                  Reset D3
-        CLR.L   D4                  Reset D4
-        CLR.L   D5                  Reset D5
-        CLR.L   D6                  Reset D6
-        BRA     START               Restart the program
+*RESTART     
+*    MOVE.B  #11, D0             Task 11 - Clear screen
+*    MOVE.W  #$FF00, D1          Clear Screen
+*    TRAP    #15                 Call Trap
+*    MOVE.B  #12,D0              Keyboard echo
+*    MOVE.B  #1,D1               Visible
+*    TRAP    #15
+*    MOVE.L  #$0000000, A0       Reset A1
+*    MOVE.L  #$0000000, A1       Reset A1
+*    MOVE.L  #$0000000, A2       Reset A2
+*    MOVE.L  #$0000000, A3       Reset the Good Buffer
+*    MOVE.L  #$0000000, A4       Reset A4
+*    MOVE.L  #$0000000, A5       Reset the Starting address
+*    MOVE.L  #$0000000, A6       Reset the Ending Address
+*    MOVEA.L #$01000000,A7       Reset stack pointer
+*    CLR.L   D1                  Reset D1
+*    CLR.L   D1                  Reset D1
+*    CLR.L   D2                  Reset D2
+*    CLR.L   D3                  Reset D3
+*    CLR.L   D4                  Reset D4
+*    CLR.L   D5                  Reset D5
+*    CLR.L   D6                  Reset D6
+*    BRA     START               Restart the program
 
+endingDisplay
 
-ENDGETKEY
-        MOVE.B  #12,D0              Use keyboard echo trap
-        MOVE.B  #0,D1               Reset Keyboard input
-        TRAP    #15                 Reset Keyboard input
-        MOVE.B  #5, D0              Set the trap to 15 for keyboard echo
-        TRAP    #15                 Use trap
-        CMP.B   #$72, D1            Compare the key press with R
-        BEQ     RESTART             it's RESTART, restart program
-        CMP.B   #$52, D1            Compare the key press with r
-        BEQ     RESTART             it's RESTART, restart program
-        CMP.B   #$71, D1            Compare the key press with q
-        BEQ     THE_END             it's q, end program
-        CMP.B   #$51, D1            Compare the key press with Q
-        BEQ     THE_END             It's Q, end program
-        CMP.B   #$5D, D1            Check the key press with [
-        BNE     GETKEY              If it is 0, we haven't pressed the correct key
-        BRA     THE_END				Else just end the program
-*---------------------------------------------
-*-----------------------------------------------------------------
+    *-----------------Display to show ending out program
+    LEA     ending00,A1
+    MOVE.B  ending00,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending01,A1
+    MOVE.B  ending01,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending02,A1
+    MOVE.B  ending02,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending03,A1
+    MOVE.B  ending03,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending04,A1
+    MOVE.B  ending04,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    
+    LEA     ending05,A1
+    MOVE.B  ending05,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+       
+    LEA     ending06,A1
+    MOVE.B  ending06,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+        
+    LEA     ending07,A1
+    MOVE.B  ending07,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+    LEA     ending08,A1
+    MOVE.B  ending08,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+    LEA     ending09,A1
+    MOVE.B  ending09,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+    LEA     ending10,A1
+    MOVE.B  ending10,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+   
+*ENDGETKEY
+*        MOVE.B  #12,D0              Use keyboard echo trap
+*        MOVE.B  #0,D1               Reset Keyboard input
+*        TRAP    #15                 Reset Keyboard input
+*        MOVE.B  #5, D0              Set the trap to 15 for keyboard echo
+*        TRAP    #15                 Use trap
+*        CMP.B   #$72, D1            Compare the key press with R
+*        BEQ     RESTART             it's RESTART, restart program
+*        CMP.B   #$52, D1            Compare the key press with r
+*        BEQ     RESTART             it's RESTART, restart program
+*        CMP.B   #$71, D1            Compare the key press with q
+*        BEQ     THE_END             it's q, end program
+*        CMP.B   #$51, D1            Compare the key press with Q
+*        BEQ     THE_END             It's Q, end program
+*        CMP.B   #$5D, D1            Check the key press with [
+*        BNE     GETKEY              If it is 0, we haven't pressed the correct key
+*        BRA     THE_END				Else just end the program
+*--------------------------------------------------------------------
+*--------------------------------------------------------------------
 *           I/O Section
-*----------------------------------------------------------------
-
+*--------------------------------------------------------------------
 *    -Parses input - take input from user to create a memory address
-
 *    - entry is parsed to make sure it falls within a valid range
-
 *    -good inputs are converteed to hex
-
 *    -the entered addres get's stored in d3
-
+*--------------------------------------------------------------------
 
 lineCount
     LEA     line_counter,A2    * Set up A2 ptr as linecount
@@ -1452,7 +1499,6 @@ lineCount
     CMP.B   #30,(A2)    * Now check if the lines hit 30
     BEQ     halt        * Pause the page if it is full
     RTS                 * If counter isnt at 31 then go back to
-    
     
 *    this will halt the program and ask user to continue
 
@@ -1467,10 +1513,7 @@ halt
     MOVE.L  #2,D0       * Load task code for user input
     TRAP    #15         * Retrieve input
     RTS                 * Return to the main program loop
-    
-*    
-
-*    
+   
 
 addressCount 
     *-THIS LOCATION IS WHERE WE WILL PERIODICALLY CHECK THE RUNNING A4 REGISTERY WITH OUR STORED
@@ -1559,23 +1602,28 @@ dec_convert
 *    - ASCII conversions UPPER case to hex value by substracting 55
 
 
-upper_ascii     SUBI.B  #55,D2  SUBTRACT 55 TO GET THE HEX VALUE OF THE CORRESPONDING CHARACTER
-    ASL.L   #4,D6   MOVE THE SANITIZED VALUE INTO D6 REGISTER
-    ADD.B   D2,D6   MOVE THE NEW BYTE INTO RETURN REGISTER
-    BRA     parse_each  parse next item
+upper_ascii     
+    SUBI.B      #55,D2  SUBTRACT 55 TO GET THE HEX VALUE OF THE CORRESPONDING CHARACTER
+    ASL.L       #4,D6   MOVE THE SANITIZED VALUE INTO D6 REGISTER
+    ADD.B       D2,D6   MOVE THE NEW BYTE INTO RETURN REGISTER
+    BRA         parse_each  parse next item
 *    -ASCI lower case to hex value by subtracting 87
 
-lower_ascii     SUBI.B  #87,D2
-    ASL.L   #4,D6
-    ADD.B   D2,D6
-    BRA     parse_each
+lower_ascii     
+    SUBI.B      #87,D2
+    ASL.L       #4,D6
+    ADD.B       D2,D6
+    BRA         parse_each
 
-parse_complete  MOVEQ   #1,D4  FINISH PARSING USER INPUT
+parse_complete  
+    MOVEQ       #1,D4  FINISH PARSING USER INPUT
     RTS             JUMP FROM SUBROUTINE
-error_no_input  LEA no_entry,A1 load bad entry statment
-    MOVE.L  #1,D0
-    TRAP    #15
+error_no_input  
+    LEA         no_entry,A1 load bad entry statment
+    MOVE.L      #1,D0
+    TRAP        #15
     ;JMP     get_input
+    
 error_char      LEA bad_char,A1
     trap #15
     ;JMP get_input0
@@ -1583,32 +1631,45 @@ error_bad_entry LEA bad_entry,A1
     TRAP #15
     ;JMP  get_input
 
-
     SIMHALT             ; halt simulator
 
-*    Put variables and constants here
+*=======================================================================
+*============================= *- ENDING DISPLAY =======================
+ending00    DC.B    '/////////////////////////////////',0
+ending01    DC.B    '/////////////////////////////////',0
+ending02    DC.B    '////                         ////',0
+ending03    DC.B    '////  Program has finished   ////',0
+ending04    DC.B    '////     Written by          ////',0
+ending05    DC.B    '////        Edward Chang     ////',0
+ending06    DC.B    '////             &           ////',0
+ending07    DC.B    '////        Danny Ly         ////',0
+ending08    DC.B    '////                         ////',0
+ending09    DC.B    '/////////////////////////////////',0
+ending10    DC.B    '/////////////////////////////////',0
+*========================================================================
 
-welcome_message DC.B    'Hello and Welcome 68Kkrew"s 68K Disassembler(get the pun)',CR,LF,0
+welcome_message DC.B    'Welcome to the 68kKrews 68K disassembler',CR,LF
+                DC.B    'Created By Danny Ly & Edward Chang',CR,LF,0 Welcome message
 
-hitEnter        DC.B 'Hit enter to display the next page.'
-enterBuf        DC.B enterBuf-hitEnter
-haltEntry       DS.B 1
-line_counter    DC.B 1
+hitEnter        DC.B    'Hit enter to display the next page.'
+enterBuf        DC.B    enterBuf-hitEnter
+haltEntry       DS.B    1
+line_counter    DC.B    1
 
 good_code_buffer    DS.B    88
 
 bad_code_buffer     DS.B    30
-no_entry    DC.B    'No Entry detected.',0
-bad_entry   DC.B    'Bad Entry Dectected.',0
-bad_char    DC.B    'Bad Char detected.',0
+no_entry        DC.B    'No Entry detected.',0
+bad_entry       DC.B    'Bad Entry Dectected.',0
+bad_char        DC.B    'Bad Char detected.',0
 *    -errors
 
 ;enter_start_AD  DC.B    'Enter a starting address between $0 and $00FFFE00: ',0
-enter_start_AD  DC.B    'Enter a starting address: ',0
+enter_start_AD      DC.B    'Enter a starting address: ',0
 userStartAddrInput  DS.B    50  address used to store the data input from user
 userEndAddrInput    DS.B    50  address used to stoer the data input from use
-userEnd         DC.B    'Enter an address greater than the starting address: ',0
-userEndInput    DS.B    50  addresse used to store the data input from user
+userEnd             DC.B    'Enter an address greater than the starting address: ',0
+userEndInput        DS.B    50  addresse used to store the data input from user
 
 error_inv_to_many_char  LEA no_entry,A1 load bad entry statment
     MOVE.L  #1,D0
@@ -1631,6 +1692,7 @@ error_inv_to_many_char  LEA no_entry,A1 load bad entry statment
 *    ~Tab type~1~
 
 *    ~Tab size~4~
+
 
 
 
