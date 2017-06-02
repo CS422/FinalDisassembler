@@ -20,17 +20,9 @@ startLoc    EQU $7000
 
 
 *    --- Notes
-
 *    We'll keep A2 as our pointer to writing to the different buffers
-
 *    A4 will be our main pointer to current memory address and current data
-
 *    D3 will be dedicated register to manipulate our data in
-
-*    
-
-*    
-
 *    ---------
 
 START:                  
@@ -44,33 +36,13 @@ START:
 *    
 
 *    - FOR TEST RANGE FROM 996 - 9CF PUT CODES OR NOP ANYWHERE BETWEEN
-
-*    
-
+*   
 *    Put program code here
-
 *    -----
-
 *    This program starts by given a starting address and an ending address disassemble
-
 *    the binary code that is at that location.
 
-*    
-
-*    
-
-*    ----
-
-*    
-
-*    -------
-
-*    Needs to check for odd addressing**
-
-*    
-
-*    
-
+*    Needs to check for odd addressing**  
 *    -----
 
 *    ---------------------I/O SECTION
@@ -85,136 +57,66 @@ START:
 
 *    -----------------------
 
-*    
-
-*    
-
-*    get_input_start_addr 
-
-*    MOVE.L  #0,A3
-
-*    CLR     D1
-
-*    LEA     enter_start_AD,A1
-
-*    MOVE.L  #14,D0
-
-*    TRAP    #15
-
-*    
-
-*    
-
-*    
-
-*    
-
-*    LEA     userStartAddrInput,A1   load address to store the input from user
-
-*    MOVE.L  #2,D0
-
-*    TRAP    #15
-
-*    JSR     parse_input             parse the starting address
-
-*    
-
-*    
-
-*    MOVE.L  D6,A5                   MOVE OUR STARTING ADDRESS TO A6
-
-*    
-
-*    ----MIGHT NEED TO CHECK FOR ODD ADDRESSING ?
-
-*    ----CHECK FOR ADDRESS OUT OF BOUNDS DOMAIN?
-
-*    
-
-*    
-
-*    get_input_end_addr
-
-*    MOVE.L  #0,A3
-
-*    CLR     D1
-
-*    LEA     userEnd,A1
-
-*    MOVE.L  #14,D0
-
-*    TRAP    #15
-
-*    
-
-*    
-
-*    
-
-*    LEA     userEndAddrInput,A1
-
-*    MOVE.B  userEnd,D1
-
-*    MOVE.L  #2,D0
-
-*    TRAP    #15
-
-*    JSR     parse_end
-
-*    
-
-*    
-
-*    MOVE.L  D6,A6           MOVE OUT ENDING ADDRESS TO 
+get_input_start_addr 
+    MOVE.L  #0,A3
+    CLR     D1
+    LEA     enter_start_AD,A1
+    MOVE.L  #14,D0
+    TRAP    #15
+    LEA     userStartAddrInput,A1   load address to store the input from user
+    MOVE.L  #2,D0
+    TRAP    #15
+    JSR     parse_input             parse the starting address
+    MOVE.L  D6,A5                   MOVE OUR STARTING ADDRESS TO A6
 
 
-*    
+get_input_end_addr
+    MOVE.L  #0,A3
+    CLR     D1
+    LEA     userEnd,A1
+    MOVE.L  #14,D0
+    TRAP    #15
+    LEA     userEndAddrInput,A1
+    MOVE.B  userEnd,D1
+    MOVE.L  #2,D0
+    TRAP    #15
+    JSR     parse_end
+    MOVE.L  D6,A6           MOVE OUT ENDING ADDRESS TO 
 
-*    
+STORE_SRT_END:
 
-*    STORE_SRT_END:
-
-*    
-
-*    ;store the starting and ending address into memory out of range
-
-*    SUB.W   A5,D6           SUBTRACT THE STARTING ADDRESS FROM THE ENDING ADDRESS TO GET THE SIZE OF INSTRUCTIONS
-
-*    MOVE.L  A5,$00FFFF00    STORE USER START ADDRESS SO WE CAN FREE UP REG
-
-*    MOVE.L  A6,$00FFFF10    STORE USER END ADDRESS SO WE CAN FREE UP REG
-
-*    MOVE.L  D6,$00FFFF20    STORE SIZE OF INSTRCTIONS
-
-*    MOVE.L  A5,A4
-
-    
-    *----------FOR TESTING PURPOSES FOR RELEASE UNCOMMENT THE ABOVE----------------
-    *       Testing Code Starts the address at 996 to 9CF about 30 entries
-    *
-    MOVE.L  #$9000,D6    Starting address loads into D6
-    MOVE.L  D6,A5       Move D6 into a5
-    
-    MOVE.L  #$FFFFF,D6
-    MOVE.L  D6,A6
-    
-    
+    ;store the starting and ending address into memory out of range
+    SUB.W   A5,D6           SUBTRACT THE STARTING ADDRESS FROM THE ENDING ADDRESS TO GET THE SIZE OF INSTRUCTIONS
     MOVE.L  A5,$00FFFF00    STORE USER START ADDRESS SO WE CAN FREE UP REG
     MOVE.L  A6,$00FFFF10    STORE USER END ADDRESS SO WE CAN FREE UP REG
-    MOVE.L  A5,A4           A4 is our starting.current pointer
-    *
-    *
-    *-------------END OF TESING CODE-----------
+    MOVE.L  D6,$00FFFF20    STORE SIZE OF INSTRCTIONS
+    MOVE.L  A5,A4
+
     
+*    
+*    
+*    *----------FOR TESTING PURPOSES FOR RELEASE UNCOMMENT THE ABOVE-----===========================-----------
+*    *       Testing Code Starts the address at 996 to 9CF about 30 entr=ies
+*    *
+*    MOVE.L  #$9000,D6    Starting address loads into D6
+*    MOVE.L  D6,A5       Move D6 into a5
+*    
+*    MOVE.L  #$FFFFF,D6
+*    MOVE.L  D6,A6
+*    
+*    
+*    MOVE.L  A5,$00FFFF00    STORE USER START ADDRESS SO WE CAN FREE UP REG
+*    MOVE.L  A6,$00FFFF10    STORE USER END ADDRESS SO WE CAN FREE UP REG
+*    MOVE.L  A5,A4           A4 is our starting.current pointer
+*    *
+*    *
+*    *-------------END OF TESING CODE-----------=============================================
+*    
+
+
     BRA get_next_instruction
     
     
-    
-
-*    Decode ---------------------------------------------------
-
-    LEA     startLoc,A4 ;loads statLoc's EA into A4
-    BRA     get_next_instruction    ;put data in D3, incre. A4
     
 mainLoop          
     *-----
@@ -345,12 +247,12 @@ mainLoop
     
 
 get_next_instruction:
-    JSR addressCount    *-CHECKS IF WE REACHED OUT ENDING ADDRESS YET
+    JSR     addressCount    *-CHECKS IF WE REACHED OUT ENDING ADDRESS YET
     *-line count
-    JSR lineCount
-    CLR D5             *-CLEAR THIS REGISTER/
+    JSR     lineCount
+    CLR     D5             *-CLEAR THIS REGISTER/
     
-    Lea good_code_buffer,A2 ;reset A2, LOADS THE BUFFER TO GET READY TO PRINT TO IT/WRITE TO IT
+    Lea     good_code_buffer,A2 ;reset A2, LOADS THE BUFFER TO GET READY TO PRINT TO IT/WRITE TO IT
     MOVE.W  A4,A0   UPDATE OUR OLD ADDRESS STORED AT 10 WITH THE MOST CURRENT POINTER ADDRESS *INCRMENTED BY A WORD
     MOVE.L  #2,D7   *-CHECKER FOR ERROR
     MOVE.L  A0,D3   *-MOVE AROUND TEH DATA STORED AT CURRENT POINTER TO D3 REGISTER TO WORK WITH IT
@@ -379,11 +281,9 @@ get_next_instruction:
     BRA     mainLoop
     
 write_data_in_D3_to_buffer:
-    *------
+    *----------------------------------------------------------------------------------------------
     *   This is where we write to whatever is in data registrer D3 our dedicated D3 writer buffer writer
-    *
-    *
-    *---------
+    *----------------------------------------------------------------------------------------------
     CMP.W   #2,D7 ERROR checking
     BNE     print_word branch off to write the first word of the line
     SWAP    D3
@@ -393,11 +293,10 @@ write_data_in_D3_to_buffer:
     MOVE.L  D6,D3
     
  print_word:
-    *-****
+    *-------------------------------------------------------------
     * called 4 times to decode from hex to ascii the first word
     *   using the below jump table
-    *
-    *-------
+    *-------------------------------------------------------------
     MOVE.W  D6,D3
     LSR.W   #8,D3
     LSR.W   #4,D3
@@ -434,12 +333,9 @@ write_data_in_D3_to_buffer:
     ADDI.B  #4,D5
     RTS
 *    -----------------------------------------------------------            
-
 *    Jump Table immAbTable *************************************
-
 *    matches the associated Addressing mode     
-
-*    
+*    -----------------------------------------------------------
 
 immAbTable  
     JSR     IA000   ;Absoulute Word
@@ -1348,141 +1244,32 @@ opError:
     
 FINISH:
     JSR     endingDisplay
-*    MOVE.L  A0,D3
-*    MOVE.L  D3,D6
-*    LEA     good_code_buffer,A2
-* 
-*    
-*    MOVE.B  #'F',(A2)+      ;print spaces
-*    MOVE.B  #'I',(A2)+      ;print spaces
-*    MOVE.B  #'I',(A2)+      ;print spaces
-*    MOVE.B  #'N',(A2)+      ;print spaces
-*    MOVE.B  #'I',(A2)+      ;print D
-*    MOVE.B  #'S',(A2)+      ;print A
-*    MOVE.B  #'H',(A2)+      ;print T
-*    MOVE.B  #'A',(A2)+      ;print A
-*    MOVE.B  #'A',(A2)+      ;print spaces
-*    MOVE.B  #'A',(A2)+      ;print spaces
-*    MOVE.B  #'H',(A2)+      ;print spaces
-*    MOVE.B  #'A',(A2)+      ;print spaces
-*    MOVE.B  #'R',(A2)+
-*    MOVE.L  (A0),D3
-*    MOVE.L  D3,D6
-*    MOVE.L  #1,D7
-*
-*    
-*    MOVE.B  #$00,(A2) * add NULL value to print string
-*    LEA     good_code_buffer,A1
-*    MOVE.B  #13,D0
-*    TRAP    #15
-*    
-    
+
+ 
     SIMHALT
 
 
-*--------------------------------SECONTION FOR IO -----------
-*RESTART     
-*    MOVE.B  #11, D0             Task 11 - Clear screen
-*    MOVE.W  #$FF00, D1          Clear Screen
-*    TRAP    #15                 Call Trap
-*    MOVE.B  #12,D0              Keyboard echo
-*    MOVE.B  #1,D1               Visible
-*    TRAP    #15
-*    MOVE.L  #$0000000, A0       Reset A1
-*    MOVE.L  #$0000000, A1       Reset A1
-*    MOVE.L  #$0000000, A2       Reset A2
-*    MOVE.L  #$0000000, A3       Reset the Good Buffer
-*    MOVE.L  #$0000000, A4       Reset A4
-*    MOVE.L  #$0000000, A5       Reset the Starting address
-*    MOVE.L  #$0000000, A6       Reset the Ending Address
-*    MOVEA.L #$01000000,A7       Reset stack pointer
-*    CLR.L   D1                  Reset D1
-*    CLR.L   D1                  Reset D1
-*    CLR.L   D2                  Reset D2
-*    CLR.L   D3                  Reset D3
-*    CLR.L   D4                  Reset D4
-*    CLR.L   D5                  Reset D5
-*    CLR.L   D6                  Reset D6
-*    BRA     START               Restart the program
+*--------------------------------SECONTION FOR IO -----------           
+*=====================Restart the program
+           
+reset       
+    LEA     line_counter,A2            * load line counter
+         
 
-endingDisplay
-
-    *-----------------Display to show ending out program
-    LEA     ending00,A1
-    MOVE.B  ending00,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-    
-    LEA     ending01,A1
-    MOVE.B  ending01,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-    
-    LEA     ending02,A1
-    MOVE.B  ending02,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-    
-    LEA     ending03,A1
-    MOVE.B  ending03,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-    
-    LEA     ending04,A1
-    MOVE.B  ending04,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-    
-    
-    LEA     ending05,A1
-    MOVE.B  ending05,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-       
-    LEA     ending06,A1
-    MOVE.B  ending06,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-    
-        
-    LEA     ending07,A1
-    MOVE.B  ending07,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-        
-    LEA     ending08,A1
-    MOVE.B  ending08,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-        
-    LEA     ending09,A1
-    MOVE.B  ending09,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-        
-    LEA     ending10,A1
-    MOVE.B  ending10,D1
-    MOVE.B  #0,D0
-    TRAP    #15
-        
-   
-*ENDGETKEY
-*        MOVE.B  #12,D0              Use keyboard echo trap
-*        MOVE.B  #0,D1               Reset Keyboard input
-*        TRAP    #15                 Reset Keyboard input
-*        MOVE.B  #5, D0              Set the trap to 15 for keyboard echo
-*        TRAP    #15                 Use trap
-*        CMP.B   #$72, D1            Compare the key press with R
-*        BEQ     RESTART             it's RESTART, restart program
-*        CMP.B   #$52, D1            Compare the key press with r
-*        BEQ     RESTART             it's RESTART, restart program
-*        CMP.B   #$71, D1            Compare the key press with q
-*        BEQ     THE_END             it's q, end program
-*        CMP.B   #$51, D1            Compare the key press with Q
-*        BEQ     THE_END             It's Q, end program
-*        CMP.B   #$5D, D1            Check the key press with [
-*        BNE     GETKEY              If it is 0, we haven't pressed the correct key
-*        BRA     THE_END				Else just end the program
+    LEA     blankLine,A1        * load opError message   
+    MOVE.B  blankLine,D1 
+    MOVE.B  #0,D0               
+    TRAP    #15                 * display opError message
+            
+    LEA     userStartAddrInput,A3   * load address and then enter null
+    MOVE.B  $0,(A3)+
+    LEA     userEndAddrInput,A3
+    MOVE.B  $0,(A3)+
+    MOVEA.L #0,A4               * clear registers A4 and A5
+    MOVEA.L #0,A5  
+            
+    BRA     get_input_start_addr * go back to start now
+           
 *--------------------------------------------------------------------
 *--------------------------------------------------------------------
 *           I/O Section
@@ -1664,6 +1451,12 @@ bad_entry       DC.B    'Bad Entry Dectected.',0
 bad_char        DC.B    'Bad Char detected.',0
 *    -errors
 
+
+rerunState      DC.B 'Do you want to run it again? Hit Y for yes, else no:',0
+rerunBuf        DC.B rerunBuf-rerunState
+userRerun       DS.B 50 * reserved for user's answer to rerun program
+blankLine       DC.B ' ',0
+
 ;enter_start_AD  DC.B    'Enter a starting address between $0 and $00FFFE00: ',0
 enter_start_AD      DC.B    'Enter a starting address: ',0
 userStartAddrInput  DS.B    50  address used to store the data input from user
@@ -1671,17 +1464,88 @@ userEndAddrInput    DS.B    50  address used to stoer the data input from use
 userEnd             DC.B    'Enter an address greater than the starting address: ',0
 userEndInput        DS.B    50  addresse used to store the data input from user
 
-error_inv_to_many_char  LEA no_entry,A1 load bad entry statment
-    MOVE.L  #1,D0
+
+
+
+
+
+endingDisplay
+
+    *-----------------Display to show ending out program
+    LEA     ending00,A1
+    MOVE.B  ending00,D1
+    MOVE.B  #0,D0
     TRAP    #15
-
+    
+    LEA     ending01,A1
+    MOVE.B  ending01,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending02,A1
+    MOVE.B  ending02,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending03,A1
+    MOVE.B  ending03,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending04,A1
+    MOVE.B  ending04,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    
+    LEA     ending05,A1
+    MOVE.B  ending05,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+       
+    LEA     ending06,A1
+    MOVE.B  ending06,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+        
+    LEA     ending07,A1
+    MOVE.B  ending07,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+    LEA     ending08,A1
+    MOVE.B  ending08,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+    LEA     ending09,A1
+    MOVE.B  ending09,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+    LEA     ending10,A1
+    MOVE.B  ending10,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+        
+************Ask if user wants to run again  
+runAgain    
+    MOVE.W  #0000,D0
+    LEA     rerunState,A1       Prompt for re runnning queston
+    MOVE.B  rerunBuf,D1       
+    TRAP    #15                     
+    LEA     userRerun,A1
+    MOVE.B  #2,D0
+    TRAP    #15
+            * Add users answer to D2 and compare with ASCII value
+    MOVE.B  (A1),D2
+    CMP.B   #$59,D2        COMPARE to Upper and Lower case 'Y''s
+    BEQ     reset
+    CMP.B   #$79,D2             
+    BEQ     reset
     END    START        ; last line of source
-
-
-
-
-
-
 
 
 
