@@ -14,7 +14,10 @@ start		EQU	$00009000	* ORG and END address
 
 * Put program code here
 
-        MOVEM.W (A2),A1-A7/D0-D2
+        MOVEM.W A1-A7/D0-D2,(A2)
+    MOVE.B  #$11,D3
+    AND.B   #%0001,D3
+  
 
 
     SIMHALT             ; halt simulator
@@ -22,6 +25,7 @@ start		EQU	$00009000	* ORG and END address
 * Put variables and constants here
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~

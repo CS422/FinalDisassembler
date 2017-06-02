@@ -1660,6 +1660,7 @@ error_inv_to_many_char  LEA no_entry,A1 load bad entry statment
 *    ~Tab size~4~
 
 
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~

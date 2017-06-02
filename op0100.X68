@@ -138,7 +138,7 @@ _movemW
     MOVE.B  #'W',(A2)+      ;print spaces
     MOVE.B  #' ',(A2)+      ;print spaces
 
-    BRA decodeMOVEM
+    BRA DecodeDr
 
 *    ---------------------------------------------------------
 _movemL
@@ -153,10 +153,11 @@ _movemL
     MOVE.B  #'L',(A2)+      ;print spaces
     MOVE.B  #' ',(A2)+      ;print spaces
 
-    BRA decodeMOVEM
+    BRA DecodeDr
 *    ---------------------------------------------------------
-decodeMOVEM
-    * decode bit 10 for direction
+DecodeDr
+* decode bit 10 for direction
+    * bit 10 : 0 => RtoM 1=>MtoR
     CLR.L   D0
     MOVE.W  D6,D0           **** *X** **** **** 
     SWAP    D0              **** **** **** *X**
@@ -164,13 +165,22 @@ decodeMOVEM
     MOVE.B  D0,D1           *X**
     LSL.B   #1,D1           X**0
     LSR.B   #3,D1           000X
-    CMP.B   #1,D1           
-    BEQ     RtoM
-    BNE     MtoR
+    CLR.L   D7
+    MOVE.B  D1,D7           D7 holds the bit 10: dr
+    CMP.B   #0,D1           
+    BEQ     RtoM            
+    JSR     MtoR       
+
+    
 *    ---------------------------------------------------------
 RtoM
-    JSR     decodeListRtoM
+    MOVE.B  #',',(A2)+
+    CMP.B   #4,D2       
+    BEQ     decodeListDesc      predecrement
+    BNE     decodeListAsc       both controlmode/postincrement
+
 *    ---------------------------------------------------------
+RtoMEA
     JSR     get_3to5_bit
     JSR     get_0to2_bit    
 *    ---------------------------------------------------------
@@ -189,10 +199,99 @@ immAbRtoM
     JSR     (A6,D1)
     BRA     printCode
 *    ------------------------------------------------------------
-
 *    End of RtoM
 *    ------------------------------------------------------------
-decodeListRtoM
+
+
+MtoR    
+*    ---------------------------------------------------------
+    JSR     get_3to5_bit
+    JSR     get_0to2_bit    
+*    ---------------------------------------------------------
+*    Only Absolute addressing
+    CMP.B   #7,D2
+    BEQ     immAbMtoR
+*    ---------------------------------------------------------
+    MOVE.B  #',',(A2)+
+    CMP.B   #4,D2       
+    BEQ     decodeListDesc      predecrement
+    BNE     decodeListAsc       both controlmode/postincrement
+*    ---------------------------------------------------------
+*    end of decoding
+*    ------------------------------------------------------------
+immAbMtoR
+    LEA     immAbTable, A6
+    MULU    #8,D1
+    JSR     (A6,D1)
+    BRA     printCode
+*    ------------------------------------------------------------
+*    End of MtoR
+*    ------------------------------------------------------------
+*   decodeList
+*    ------------------------------------------------------------
+decodeListAsc
+* bit 0 to 7, going D0 to D7
+    MOVE.L  D4,D5
+    LSR.L   #8,D5
+    LSR.L   #8,D5
+    CLR.L   D2
+FindSmallestD
+    MOVE.W  D5,D3
+    AND.B   #%0001,D3   check the smallest bit
+    CMP.B   #1,D3
+    BEQ     FoundSD
+    LSR.W   #1,D5
+    ADD.B   #1,D2           increment
+    CMP.B   #8,D2           end of the loop compare
+    BEQ     setupFindSA    end of the loop
+    BNE     FindSmallestD   
+FoundSD
+*print
+    MOVE.B  #'D',(A2)+
+    LEA     numTable,A6
+    CLR.L   D0
+    MOVE.B  D2,D0
+    MULS    #8,D0
+    JSR     (A6,D0)
+    MOVE.B  #'/',(A2)+
+    ADD.B   #1,D2       increment
+    LSR.W   #1,D5
+    BRA     FindSmallestD
+*    ------------------------------------------------------------    
+* bit 8 to 15, going A0 to A7
+setupFindSA    
+    MOVE.L  D4,D5
+    
+    LSR.L   #8,D5
+    LSR.L   #8,D5
+    LSR.L   #8,D5
+    CLR.L   D2
+    CLR.L   D3
+FindSA
+    MOVE.W  D5,D3
+    AND.B   #%0001,D3   check the smallest bit
+    CMP.B   #1,D3
+    BEQ     FoundSA
+    LSR.W   #1,D5
+    ADD.B   #1,D2       increment
+    CMP.B   #8,D2       end of the loop compare
+    BEQ     AfterList    end of the decodeListDesc
+    BNE     FindSA
+    
+FoundSA
+*print
+    MOVE.B  #'A',(A2)+
+    LEA     numTable,A6
+    CLR.L   D0
+    MOVE.B  D2,D0
+    MULS    #8,D0
+    JSR     (A6,D0)
+    MOVE.B  #'/',(A2)+
+    ADD.B   #1,D2       increment
+    LSR.W   #1,D5
+    BRA     FindSA
+*    ------------------------------------------------------------ 
+decodeListDesc
 * bit 7 to 0, going A0 to A7
     MOVE.L  D4,D5
     LSR.L   #8,D5
@@ -204,6 +303,7 @@ FindLargestA
     LSR.W   #7,D3
     CMP.B   #1,D3
     BEQ     FoundLA
+    LSL.W   #1,D5
     ADD.B   #1,D2           increment
     CMP.B   #8,D2           end of the loop compare
     BEQ     setupFindLargestD    end of the loop
@@ -236,11 +336,11 @@ FindLargestD
     LSR.W   #7,D3
     CMP.B   #1,D3
     BEQ     FoundLD
+    LSL.W   #1,D5
     ADD.B   #1,D2       increment
     CMP.B   #8,D2       end of the loop compare
-    BEQ     printCode   end of the loop
-    BNE     FindLargestD
-    
+    BEQ     AfterList    end of the decodeListDesc
+    BNE     FindLargestD   
 FoundLD
 *print
     MOVE.B  #'D',(A2)+
@@ -254,36 +354,13 @@ FoundLD
     LSL.W   #1,D5
     BRA     FindLargestD
 *    ------------------------------------------------------------ 
-MtoR    
-*    ---------------------------------------------------------
-    JSR     get_3to5_bit
-    JSR     get_0to2_bit    
-*    ---------------------------------------------------------
-*    Only Absolute addressing
-    CMP.B   #7,D2
-    BEQ     immAbMtoR
-*    ---------------------------------------------------------
-    MOVE.B  #',',(A2)+
-    JSR     decodeListMtoR
-*    ---------------------------------------------------------
-*    end of decoding
-*    ------------------------------------------------------------
-immAbMtoR
-    LEA     immAbTable, A6
-    MULU    #8,D1
-    JSR     (A6,D1)
-    BRA     printCode
-*    ------------------------------------------------------------
-*    End of RtoM
-*    ------------------------------------------------------------
-decodeListMtoR
-*    ------------------------------------------------------------
-
-    
-    
-    
-*    ------------------------------------------------------------
-
+AfterList    
+    CMP.B   #0,D7
+    BEQ     RtoMEA          RtoM
+    BNE     printCode       MtoR
+*    ------------------------------------------------------------ 
+*       End of MOVEM
+*    ------------------------------------------------------------ 
 
 *    NOP subroutine
 
@@ -528,6 +605,7 @@ check_clr_or_moveM:
 *    ~Tab type~1~
 
 *    ~Tab size~4~
+
 
 
 
