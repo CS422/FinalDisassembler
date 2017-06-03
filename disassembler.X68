@@ -20,17 +20,9 @@ startLoc    EQU $7000
 
 
 *    --- Notes
-
 *    We'll keep A2 as our pointer to writing to the different buffers
-
 *    A4 will be our main pointer to current memory address and current data
-
 *    D3 will be dedicated register to manipulate our data in
-
-*    
-
-*    
-
 *    ---------
 
 START:                  
@@ -42,36 +34,6 @@ START:
     TRAP    #15
     
 *    
-
-*    - FOR TEST RANGE FROM 996 - 9CF PUT CODES OR NOP ANYWHERE BETWEEN
-
-*    
-
-*    Put program code here
-
-*    -----
-
-*    This program starts by given a starting address and an ending address disassemble
-
-*    the binary code that is at that location.
-
-*    
-
-*    
-
-*    ----
-
-*    
-
-*    -------
-
-*    Needs to check for odd addressing**
-
-*    
-
-*    
-
-*    -----
 
 *    ---------------------I/O SECTION
 
@@ -85,169 +47,80 @@ START:
 
 *    -----------------------
 
-*    
-
-*    
-
-*    get_input_start_addr 
-
-*    MOVE.L  #0,A3
-
-*    CLR     D1
-
-*    LEA     enter_start_AD,A1
-
-*    MOVE.L  #14,D0
-
-*    TRAP    #15
-
-*    
-
-*    
-
-*    
-
-*    
-
-*    LEA     userStartAddrInput,A1   load address to store the input from user
-
-*    MOVE.L  #2,D0
-
-*    TRAP    #15
-
-*    JSR     parse_input             parse the starting address
-
-*    
-
-*    
-
-*    MOVE.L  D6,A5                   MOVE OUR STARTING ADDRESS TO A6
-
-*    
-
-*    ----MIGHT NEED TO CHECK FOR ODD ADDRESSING ?
-
-*    ----CHECK FOR ADDRESS OUT OF BOUNDS DOMAIN?
-
-*    
-
-*    
-
-*    get_input_end_addr
-
-*    MOVE.L  #0,A3
-
-*    CLR     D1
-
-*    LEA     userEnd,A1
-
-*    MOVE.L  #14,D0
-
-*    TRAP    #15
-
-*    
-
-*    
-
-*    
-
-*    LEA     userEndAddrInput,A1
-
-*    MOVE.B  userEnd,D1
-
-*    MOVE.L  #2,D0
-
-*    TRAP    #15
-
-*    JSR     parse_end
-
-*    
-
-*    
-
-*    MOVE.L  D6,A6           MOVE OUT ENDING ADDRESS TO 
-
-
-*    
-
-*    
-
-*    STORE_SRT_END:
-
-*    
-
-*    ;store the starting and ending address into memory out of range
-
-*    SUB.W   A5,D6           SUBTRACT THE STARTING ADDRESS FROM THE ENDING ADDRESS TO GET THE SIZE OF INSTRUCTIONS
-
-*    MOVE.L  A5,$00FFFF00    STORE USER START ADDRESS SO WE CAN FREE UP REG
-
-*    MOVE.L  A6,$00FFFF10    STORE USER END ADDRESS SO WE CAN FREE UP REG
-
-*    MOVE.L  D6,$00FFFF20    STORE SIZE OF INSTRCTIONS
-
-*    MOVE.L  A5,A4
-
+get_input_start_addr 
+    MOVE.L  #0,A3
+    CLR     D1
+    LEA     enter_start_AD,A1
+    MOVE.L  #14,D0
+    TRAP    #15
+    LEA     userStartAddrInput,A1   load address to store the input from user
+    MOVE.L  #2,D0
+    TRAP    #15
+    JSR     parse_input             parse the starting address
+    MOVE.L  D6,A5                   MOVE OUR STARTING ADDRESS TO A6
     
-    *----------FOR TESTING PURPOSES FOR RELEASE UNCOMMENT THE ABOVE----------------
-    *       Testing Code Starts the address at 996 to 9CF about 30 entries
-    *
-    MOVE.L  #$9000,D6    Starting address loads into D6
-    MOVE.L  D6,A5       Move D6 into a5
     
-    MOVE.L  #$FFFFF,D6
+    MOVE.L  #0,D3
+    MOVE.L  D6,D3       Check for odd addressing
+    ASR     #1,D3
+    BCS     oddError
+    MOVE.L  D6,A5
+
+
+get_input_end_addr
+    MOVE.L  #0,A3
+    CLR     D1
+    LEA     userEnd,A1
+    MOVE.L  #14,D0
+    TRAP    #15
+    LEA     userEndAddrInput,A1
+    MOVE.B  userEnd,D1
+    MOVE.L  #2,D0
+    TRAP    #15
+    JSR     parse_end
+    MOVE.L  D6,A6           MOVE OUT ENDING ADDRESS TO 
+    
+    
+    MOVE.L  #0,D3       check for odd addressing
+    MOVE.L  D6,D3
+    ASR #1,D3
+    BCS     oddError
     MOVE.L  D6,A6
-    
-    
+
+STORE_SRT_END:
+
+    ;store the starting and ending address into memory out of range
+    SUB.W   A5,D6           SUBTRACT THE STARTING ADDRESS FROM THE ENDING ADDRESS TO GET THE SIZE OF INSTRUCTIONS
     MOVE.L  A5,$00FFFF00    STORE USER START ADDRESS SO WE CAN FREE UP REG
     MOVE.L  A6,$00FFFF10    STORE USER END ADDRESS SO WE CAN FREE UP REG
-    MOVE.L  A5,A4           A4 is our starting.current pointer
-    *
-    *
-    *-------------END OF TESING CODE-----------
+    MOVE.L  D6,$00FFFF20    STORE SIZE OF INSTRCTIONS
+    MOVE.L  A5,A4
+
     
+*    
+*    
+*    *----------FOR TESTING PURPOSES FOR RELEASE UNCOMMENT THE ABOVE-----===========================-----------
+*    *       Testing Code Starts the address at 996 to 9CF about 30 entr=ies
+*    *
+*    MOVE.L  #$9000,D6    Starting address loads into D6
+*    MOVE.L  D6,A5       Move D6 into a5
+*    
+*    MOVE.L  #$FFFFF,D6
+*    MOVE.L  D6,A6
+*    
+*    
+*    MOVE.L  A5,$00FFFF00    STORE USER START ADDRESS SO WE CAN FREE UP REG
+*    MOVE.L  A6,$00FFFF10    STORE USER END ADDRESS SO WE CAN FREE UP REG
+*    MOVE.L  A5,A4           A4 is our starting.current pointer
+*    *
+*    *
+*    *-------------END OF TESING CODE-----------=============================================
+*    
+
+
     BRA get_next_instruction
     
     
-    
-*    ---move_addresses:
-
-    
-    *-MOVE 2 INTO DATA REG
-    
-    ;JSR     LOOP
-    *----LEA     good_code_buffer,a2 ;load the code buffer
-    *-STORE THE OLD ADDRESS/STARTING/CURRENT INTO
-    
-    *----MOVE.W  A4,A0
-    
-    *-STORE 2 AT DATA REG MAYBE FOR INCREMNTEATION
-    *----MOVE.B  #2,D4
-    
-    *-MOVE OLD ADDRESS TO DATA REGISTER
-    *-----MOVE.L  A0,D3   ;D3 IS USED TO PRINT OUT THE ADDRESS LINE, OR ANYTHING IN D3
-    *------MOVE.L  D3,D7
-    
-
-
-
-    *------LEA     good_code_buffer,A2 load again
-    *------JSR     print_d3
-    
-    
-    ;JSR     get_opcode
-
-    *----MIGHT NEED TO CHECK FOR ODD ADDRESSING ?
-    *----CHECK FOR ADDRESS OUT OF BOUNDS DOMAIN?
-    ;SIMHALT
-
-
-*    ---------------------------------------------------------- 
-
-*    Decode ---------------------------------------------------
-
-    LEA     startLoc,A4 ;loads statLoc's EA into A4
-    BRA     get_next_instruction    ;put data in D3, incre. A4
     
 mainLoop          
     *-----
@@ -374,79 +247,24 @@ mainLoop
 
 *    -----------------------------------------------------------------------           
 
-    BRA     opERROR     ;invalid opcode display we havent implemented this code yet
+    BRA     opERROR     ;invalid opcode display 
     
-    ;branch to display opError display
-    
-    ;print all the things...
- *******************************************************************************
-*    
 
-
-*    
-
-*    
-
-*    
-
-lineCount
-    LEA     line_counter,A2    * Set up A2 ptr as linecount
-    ADDI.B  #$1,(A2)    * Increment the number of lines by one
-    CMP.B   #30,(A2)    * Now check if the lines hit 30
-    BEQ     halt        * Pause the page if it is full
-    RTS                 * If counter isnt at 31 then go back to
-    
-    
-*    this will halt the program and ask user to continue
-
-halt
-    CLR     D1
-    MOVE.B  #00,(A2)     * Reset the counter then display message
-    LEA     hitEnter,A1  * Load lower address prompt
-    MOVE.B  enterBuf,D1  * Load lower prompt length
-    MOVE.L  #1,D0        * Load task code for prompt
-    TRAP    #15          * Display user prompt
-    LEA     haltEntry,A1    * Load address to store user input
-    MOVE.L  #2,D0       * Load task code for user input
-    TRAP    #15         * Retrieve input
-    RTS                 * Return to the main program loop
-    
-*    
-
-*    
-
-*    
-
-*    
-
-addressCount 
-    *-THIS LOCATION IS WHERE WE WILL PERIODICALLY CHECK THE RUNNING A4 REGISTERY WITH OUR STORED
-    *-ENDING ADDRESS VALUE TO SEE IF WE HAVE REACHED THE END OF OUR ADDRESS RANGE
-    *-A4 IS ALSO ACTS AS OUR 'I' VALUE OR OUR VALUE THAT KEEPS POINTING TO MEMORY LOCATIONS
-    *-wE CAN USE THIS POINTER TO ACCESS DATA FURTHURE DOWN, THE END ADDRESS WE DO NOT NEED TO KEEP
-    *-TRACK OF CONSTANTLY SO WE CAN STORE INTO MEMORY AND RETRIEVE FROM MEMORY WHEN WE NEED IT
-    
-    LEA   $00FFFF10,A5  * RETRIEVE ENDING ADDRESS(THE LESASH /POINTER TO ENGIND ADDRESS
-    MOVE.L  (A5),D1     * MOVE THE DATA STORED AT THE POINTER TO DATA REGISTER
-    MOVE.L  A4,D5       * MOVE OPUR CURRENT POINTER 'I' FROM ADDRESS REGISTER TO DATA REGISTER
-    CMP.L   D5,D1       * COMPARE THE ADDRESSES
-    BLE     FINISH      * branch to end if ending address reached
-    RTS                 * return IF WE HAVE NOT FINISHED
-    
 get_next_instruction:
-    JSR addressCount    *-CHECKS IF WE REACHED OUT ENDING ADDRESS YET
+    JSR     addressCount    *-CHECKS IF WE REACHED OUT ENDING ADDRESS YET
     *-line count
-    JSR lineCount
-    CLR D5             *-CLEAR THIS REGISTER/
+    JSR     lineCount
+    CLR     D5             *-CLEAR THIS REGISTER/
     
-    Lea good_code_buffer,A2 ;reset A2, LOADS THE BUFFER TO GET READY TO PRINT TO IT/WRITE TO IT
-    MOVE.W  A4,A0   UPDATE OUR OLD ADDRESS STORED AT 10 WITH THE MOST CURRENT POINTER ADDRESS *INCRMENTED BY A WORD
-    MOVE.L  #2,D7   *-CHECKER FOR ERROR
+    LEA     good_code_buffer,A2 ;reset A2, LOADS THE BUFFER TO GET READY TO PRINT TO IT/WRITE TO IT
+    MOVE.W  A4,A0           UPDATE OUR OLD ADDRESS STORED AT 10 WITH THE MOST CURRENT POINTER ADDRESS *INCRMENTED BY A WORD
     MOVE.L  A0,D3   *-MOVE AROUND TEH DATA STORED AT CURRENT POINTER TO D3 REGISTER TO WORK WITH IT
     MOVE.L  D3,D6
     LEA     good_code_buffer,A2
     *-write the current data moved to data register d3
-    JSR     write_data_in_D3_to_buffer
+    ;JSR     write_data_in_D3_to_buffer
+    MOVE.L  D3,D4
+    JSR     print_long
     
     MOVE.B  #' ',(A2)
     MOVE.B  #' ',(A2)
@@ -471,12 +289,9 @@ get_next_instruction:
     BRA     mainLoop
     
 write_data_in_D3_to_buffer:
-    *------
+    *----------------------------------------------------------------------------------------------
     *   This is where we write to whatever is in data registrer D3 our dedicated D3 writer buffer writer
-    *
-    *
-    *---------
-    CMP.W   #2,D7 ERROR checking
+    *----------------------------------------------------------------------------------------------
     BNE     print_word branch off to write the first word of the line
     SWAP    D3
     SWAP    D6
@@ -484,12 +299,11 @@ write_data_in_D3_to_buffer:
     SWAP    D6
     MOVE.L  D6,D3
     
- print_word:
-    *-****
+print_word:
+    *-------------------------------------------------------------
     * called 4 times to decode from hex to ascii the first word
     *   using the below jump table
-    *
-    *-------
+    *-------------------------------------------------------------
     MOVE.W  D6,D3
     LSR.W   #8,D3
     LSR.W   #4,D3
@@ -526,14 +340,12 @@ write_data_in_D3_to_buffer:
     ADDI.B  #4,D5
     RTS
 *    -----------------------------------------------------------            
-
 *    Jump Table immAbTable *************************************
-
 *    matches the associated Addressing mode     
+*    -----------------------------------------------------------
 
-*    
-
-immAbTable  JSR     IA000   ;Absoulute Word
+immAbTable  
+    JSR     IA000   ;Absoulute Word
     RTS             ;return, done printing
     JSR     IA001   ;Aboulute Long
     RTS             ;return, done printing
@@ -724,7 +536,8 @@ IA100                               ;immediateByte
 
 *    
 
-modeTable   JSR     M0000   ;Dn, Data Register 
+modeTable   
+    JSR     M0000   ;Dn, Data Register 
     RTS             ;return, done printing
     JSR     M0001   ;An, Address Register
     RTS             ;return, done printing
@@ -760,7 +573,7 @@ M0001                               ;An
     MOVEA.L A2,A3           ;get address for n
     MOVE.B  #' ',(A2)+      ;blank
     RTS
-
+*-Orthoginal means statistically independant
 *    -----------------------------------------------------------            
 
 *    Subroutine M0010 ------------------------------------------
@@ -861,7 +674,8 @@ registerPrint
 
 *    
 
-regNumTable JSR     RN0000   ;register 0
+regNumTable 
+    JSR     RN0000   ;register 0
     RTS             ;return, done printing
     JSR     RN0001   ;register 1
     RTS             ;return, done printing
@@ -902,7 +716,7 @@ RN0010
     RTS
  
 *    -----------------------------------------------------------            
-
+    
 *    Subroutine RN0011 ------------------------------------------
 
 RN0011
@@ -1123,16 +937,11 @@ N1111
 
 
 *    HELPER LOCATION
-
 *    HELPER LOCATION
-
 *    HELPER LOCATION
-
 *    HELPER LOCATION
-
 *    HELPER LOCATION
-
-*    ------------------------------------------------------------
+*------------------------------------------------------------
 
 get_0to2_bit
 *    ------------------------------------------------------------
@@ -1340,84 +1149,36 @@ WordOrLong
     
     
     
-    *---------------------------------------------------------------
-    *--------------------------------------------------------
-    *-OPCODE SUB ROUTINE INCLUDES ( all decodes are in different files - See files
+    *------------------------------------------------------------------------------
+    *------------------------------------------------------------------------------
+    *-OPCODE SUB ROUTINE INCLUDES ( all decodes are in different files - See files)
     *-------------------------------------
     INCLUDE 'op0100.x68'    IN a different file, modulated design
     INCLUDE 'op0110.x68'    BRA,Bcc(BCC,BLT,BGE)
     INCLUDE 'op0001.x68'    MOVE.B MOVEA.B
     INCLUDE 'op0011.x68'    MOVE.W, MOVEA.W
     INCLUDE 'op0010.x68'    MOVE.L, MOVEA.L
-
     INCLUDE 'op1101.x68'    ADD,ADDA
     INCLUDE 'op1001.x68'    SUB, SUBA
-    INCLUDE 'op1000.x68'    DIVU
+    INCLUDE 'op1000.x68'    DIVU999
     INCLUDE 'op0111.x68'    MOVEQ
-    
     INCLUDE 'op0000.x68'    ADDI
     INCLUDE 'op0101.x68'    SUBQ,ADDQ
     INCLUDE 'op1110.x68'    ROR,ROL,ASR,ASL,LSL,LSR
     INCLUDE 'op1100.x68'
-    
-
-
-
-
-
-
 
     
-    
-
-    
-opError                             
-    MOVE.L  A0,D3
-    MOVE.L  D3,D6
-    LEA     bad_code_buffer,A2
-    MOVE.L  #2,D7
-    JSR     write_data_in_D3_to_buffer
-    
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #'D',(A2)+      ;print D
-    MOVE.B  #'A',(A2)+      ;print A
-    MOVE.B  #'T',(A2)+      ;print T
-    MOVE.B  #'A',(A2)+      ;print A
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    
-    
-    MOVE.B  #'F',(A2)+      ;print spaces
-    MOVE.B  #'F',(A2)+      ;print spaces
-    MOVE.B  #'F',(A2)+      ;print spaces
-    MOVE.B  #'F',(A2)+      ;print spaces
-    
-    
-    ;MOVE.L  (A0),D3
-    ;MOVE.L  D3,D6
-    ;MOVE.L  #1,D7
-    ;JSR     write_data_in_D3_to_buffer
-    
-    MOVE.B  #$00,(A2) * add NULL value to print string
-    LEA     bad_code_buffer,A1
-    MOVE.B  #13,D0
-    TRAP    #15
-    
-    BRA     get_next_instruction
 printCode   
     MOVE.B  #$00,(A2)   * add NULL value to print string
     MOVEP   (A2),D3
     LEA     good_code_buffer,A1 * load buffer for good code to print
     MOVEQ   #13,D0
     TRAP    #15         * display code
-  
     BRA     get_next_instruction
-*    OP Codes -------------------------------------------------
+    
+
+*------------------------------- OP Codes ------------------------------
+*-----------------------------------------------------------------------
 
 bin0000     EQU     %0000   ;ADDI, ANDI, EORI, BCHG, CMPI
 bin0001     EQU     %0001   ;MOVE.B
@@ -1434,7 +1195,7 @@ bin1100     EQU     %1100   ;AND, MULS.W
 bin1101     EQU     %1101   ;ADD, ADDA
 bin1110     EQU     %1110   ;ASR, ASL, ROL, ROR
 
-*    Binary HEX values*---------------------------------------------------------------
+*----------------------------------Binary HEX values*-------------------
 
 hex_0   EQU     %0000 ;0 percent syntax means binary repersentation of this value
 hex_1   EQU     %0001 ;1
@@ -1452,67 +1213,125 @@ hex_C   EQU     %1100 ;C
 hex_D   EQU     %1101 ;D
 hex_E   EQU     %1110 ;E
 hex_F   EQU     %1111 ;F      
-    
-;LOOP:
-    *-compare the adress pointers current address with ending address to see if we need to continue
-    *- load the address registrer (pointer/ this helps us look at data)
-    *-load address register number into data register
-    
-    ;MOVE.L  a5,d2   ;move the value of a5 to d2(starting/current pointing number)
-    ;lea     $00FFFF10,a6    ;load the ending address to d3(we do this so in the future d3 is not just storing something, we can free up d3 to use
-    ;MOVE.L  (a6),d3         since we loaded the address of ou engine value into a address register 'basically keeping its pointer instance' we deref it for the value
-    ;CMP.L   d2,d3       ;if the current poiinter is the same as
-    ;BEQ     FINISH      ;finish they are equal
-    ;RTS
+*--------------------------------------------------------------------------
+*--------------------------------------------------------------------------
 
-    
-    *----------END OF I/O SECTION*---
-    
-FINISH:
-    *INCLUDE 'opcode_subroutine.x68'
+
+
+opError:
+    *-if its error no 4 MSB match move the address into D3 and call
+    *-write data in 3 to buffer                             
+
     MOVE.L  A0,D3
-    MOVE.L  D3,D6
-    LEA     good_code_buffer,A2
- 
+    MOVE.L  A0,D6
     
-    MOVE.B  #'F',(A2)+      ;print spaces
-    MOVE.B  #'I',(A2)+      ;print spaces
-    MOVE.B  #'I',(A2)+      ;print spaces
-    MOVE.B  #'N',(A2)+      ;print spaces
-    MOVE.B  #'I',(A2)+      ;print D
-    MOVE.B  #'S',(A2)+      ;print A
-    MOVE.B  #'H',(A2)+      ;print T
+    MOVE.L  A0,D4
+    LEA     bad_code_buffer,A2
+    JSR     print_long
+    *LEA     bad_code_buffer,A2
+    ;JSR     write_data_in_D3_to_buffer
+    
+    MOVE.B  #' ',(A2)+      ;print spaces
+    MOVE.B  #' ',(A2)+      ;print spaces
+    MOVE.B  #' ',(A2)+      ;print spaces
+    MOVE.B  #' ',(A2)+      ;print spaces
+    MOVE.B  #'D',(A2)+      ;print D
     MOVE.B  #'A',(A2)+      ;print A
-    MOVE.B  #'A',(A2)+      ;print spaces
-    MOVE.B  #'A',(A2)+      ;print spaces
-    MOVE.B  #'H',(A2)+      ;print spaces
-    MOVE.B  #'A',(A2)+      ;print spaces
-    MOVE.B  #'R',(A2)+
-    MOVE.L  (A0),D3
-    MOVE.L  D3,D6
-    MOVE.L  #1,D7
-
+    MOVE.B  #'T',(A2)+      ;print T
+    MOVE.B  #'A',(A2)+      ;print A
+    MOVE.B  #' ',(A2)+     
+    MOVE.B  #' ',(A2)+    
+    MOVE.B  #' ',(A2)+      
+    MOVE.B  #' ',(A2)+      
     
-    MOVE.B  #$00,(A2) * add NULL value to print string
-    LEA     good_code_buffer,A1
+    
+    MOVE.B  #'F',(A2)+     
+    MOVE.B  #'F',(A2)+     
+    MOVE.B  #'F',(A2)+    
+    MOVE.B  #'F',(A2)+     
+       
+    MOVE.B  #$00,(A2)       add NULL to end of string buffer
+    *LEA    good_code_buffer,A2
+    LEA     bad_code_buffer,A1
     MOVE.B  #13,D0
     TRAP    #15
+    BRA     get_next_instruction
+    
+    
+FINISH:
+    JSR     endingDisplay
+
+ 
     SIMHALT
 
-*    -390 -> 406 WITH NOP AT 400
 
-*-----------------------------------------------------------------
+*--------------------------------SECONTION FOR IO -----------           
+*=====================Restart the program
+           
+reset       
+    LEA     line_counter,A2            * load line counter
+         
+
+    LEA     blankLine,A1        * load opError message   
+    MOVE.B  blankLine,D1 
+    MOVE.B  #0,D0               
+    TRAP    #15                 * display opError message
+            
+    LEA     userStartAddrInput,A3   * load address and then enter null
+    MOVE.B  $0,(A3)+
+    LEA     userEndAddrInput,A3
+    MOVE.B  $0,(A3)+
+    MOVEA.L #0,A4               * clear registers A4 and A5
+    MOVEA.L #0,A5  
+            
+    BRA     get_input_start_addr * go back to start now
+           
+*--------------------------------------------------------------------
+*--------------------------------------------------------------------
 *           I/O Section
-*----------------------------------------------------------------
-
+*--------------------------------------------------------------------
 *    -Parses input - take input from user to create a memory address
-
 *    - entry is parsed to make sure it falls within a valid range
-
 *    -good inputs are converteed to hex
-
 *    -the entered addres get's stored in d3
+*--------------------------------------------------------------------
 
+lineCount
+    LEA     line_counter,A2    * Set up A2 ptr as linecount
+    ADDI.B  #$1,(A2)    * Increment the number of lines by one
+    CMP.B   #30,(A2)    * Now check if the lines hit 30
+    BEQ     halt        * Pause the page if it is full
+    RTS                 * If counter isnt at 31 then go back to
+    
+*    this will halt the program and ask user to continue
+
+halt
+    CLR     D1
+    MOVE.B  #00,(A2)     * Reset the counter then display message
+    LEA     hitEnter,A1  * Load lower address prompt
+    MOVE.B  enterBuf,D1  * Load lower prompt length
+    MOVE.L  #1,D0        * Load task code for prompt
+    TRAP    #15          * Display user prompt
+    LEA     haltEntry,A1    * Load address to store user input
+    MOVE.L  #2,D0       * Load task code for user input
+    TRAP    #15         * Retrieve input
+    RTS                 * Return to the main program loop
+   
+
+addressCount 
+    *-THIS LOCATION IS WHERE WE WILL PERIODICALLY CHECK THE RUNNING A4 REGISTERY WITH OUR STORED
+    *-ENDING ADDRESS VALUE TO SEE IF WE HAVE REACHED THE END OF OUR ADDRESS RANGE
+    *-A4 IS ALSO ACTS AS OUR 'I' VALUE OR OUR VALUE THAT KEEPS POINTING TO MEMORY LOCATIONS
+    *-wE CAN USE THIS POINTER TO ACCESS DATA FURTHURE DOWN, THE END ADDRESS WE DO NOT NEED TO KEEP
+    *-TRACK OF CONSTANTLY SO WE CAN STORE INTO MEMORY AND RETRIEVE FROM MEMORY WHEN WE NEED IT
+    
+    LEA   $00FFFF10,A5  * RETRIEVE ENDING ADDRESS(THE LESASH /POINTER TO ENGIND ADDRESS
+    MOVE.L  (A5),D1     * MOVE THE DATA STORED AT THE POINTER TO DATA REGISTER
+    MOVE.L  A4,D5       * MOVE OPUR CURRENT POINTER 'I' FROM ADDRESS REGISTER TO DATA REGISTER
+    CMP.L   D5,D1       * COMPARE THE ADDRESSES
+    BLE     FINISH      * branch to end if ending address reached
+    RTS                 * return IF WE HAVE NOT FINISHED
+    
 parse_input     
     MOVEQ   #$0,D6  ZERO OUT THE REGISTERY
     MOVEQ   #$0,D5  ZERO OUT THE REGISTERY
@@ -1586,71 +1405,171 @@ dec_convert
 *    - ASCII conversions UPPER case to hex value by substracting 55
 
 
-upper_ascii     SUBI.B  #55,D2  SUBTRACT 55 TO GET THE HEX VALUE OF THE CORRESPONDING CHARACTER
-    ASL.L   #4,D6   MOVE THE SANITIZED VALUE INTO D6 REGISTER
-    ADD.B   D2,D6   MOVE THE NEW BYTE INTO RETURN REGISTER
-    BRA     parse_each  parse next item
+upper_ascii     
+    SUBI.B      #55,D2  SUBTRACT 55 TO GET THE HEX VALUE OF THE CORRESPONDING CHARACTER
+    ASL.L       #4,D6   MOVE THE SANITIZED VALUE INTO D6 REGISTER
+    ADD.B       D2,D6   MOVE THE NEW BYTE INTO RETURN REGISTER
+    BRA         parse_each  parse next item
 *    -ASCI lower case to hex value by subtracting 87
 
-lower_ascii     SUBI.B  #87,D2
-    ASL.L   #4,D6
-    ADD.B   D2,D6
-    BRA     parse_each
+lower_ascii     
+    SUBI.B      #87,D2
+    ASL.L       #4,D6
+    ADD.B       D2,D6
+    BRA         parse_each
 
-parse_complete  MOVEQ   #1,D4  FINISH PARSING USER INPUT
+parse_complete  
+    MOVEQ       #1,D4  FINISH PARSING USER INPUT
     RTS             JUMP FROM SUBROUTINE
-error_no_input  LEA no_entry,A1 load bad entry statment
-    MOVE.L  #1,D0
-    TRAP    #15
+error_no_input  
+    LEA         no_entry,A1 load bad entry statment
+    MOVE.L      #1,D0
+    TRAP        #15
     ;JMP     get_input
+    
 error_char      LEA bad_char,A1
     trap #15
     ;JMP get_input0
 error_bad_entry LEA bad_entry,A1
     TRAP #15
     ;JMP  get_input
-
-
+oddError
+    CLR     D0
+    MOVE.B  #0,D0
+    LEA     oddInput,A1         * load odd number error
+    MOVE.B  odd_input_buffer,D1      * set odd number error
+    TRAP    #15                 * display odd number entered
+    MOVE.B  #0,D1
+    JMP     get_input_start_addr
     SIMHALT             ; halt simulator
 
-*    Put variables and constants here
+*=======================================================================
+*============================= *- ENDING DISPLAY =======================
+ending00    DC.B    '/////////////////////////////////',0
+ending01    DC.B    '/////////////////////////////////',0
+ending02    DC.B    '////                         ////',0
+ending03    DC.B    '////  Program has finished   ////',0
+ending04    DC.B    '////     Written by          ////',0
+ending05    DC.B    '////        Edward Chang     ////',0
+ending06    DC.B    '////             &           ////',0
+ending07    DC.B    '////        Danny Ly         ////',0
+ending08    DC.B    '////                         ////',0
+ending09    DC.B    '/////////////////////////////////',0
+ending10    DC.B    '/////////////////////////////////',0
+*========================================================================
 
-welcome_message DC.B    'Hello and Welcome 68Kkrew"s 68K Disassembler(get the pun)',CR,LF,0
-
-hitEnter        DC.B 'Hit enter to display the next page.'
-enterBuf        DC.B enterBuf-hitEnter
-haltEntry       DS.B 1
-line_counter    DC.B 1
+welcome_message DC.B    'Welcome to the 68kKrews 68K disassembler',CR,LF
+                DC.B    'Created By Danny Ly & Edward Chang',CR,LF,0 Welcome message
+oddInput        DC.B    'ERROR input is Odd, address must be even',0
+odd_input_buffer    DC.B    odd_input_buffer-oddInput
+hitEnter        DC.B    'Hit enter to display the next page.'
+enterBuf        DC.B    enterBuf-hitEnter
+haltEntry       DS.B    1
+line_counter    DC.B    1
 
 good_code_buffer    DS.B    88
 
 bad_code_buffer     DS.B    30
-no_entry    DC.B    'No Entry detected.',0
-bad_entry   DC.B    'Bad Entry Dectected.',0
-bad_char    DC.B    'Bad Char detected.',0
+no_entry        DC.B    'No Entry detected.',0
+bad_entry       DC.B    'Bad Entry Dectected.',0
+bad_char        DC.B    'Bad Char detected.',0
 *    -errors
 
+
+rerunState      DC.B 'Reapeat the decoding ? Type Y and Enter for yes, otherwise no(type nothing):',0
+rerunBuf        DC.B rerunBuf-rerunState
+userRerun       DS.B 50 * reserved for user's answer to rerun program
+blankLine       DC.B ' ',0
+
 ;enter_start_AD  DC.B    'Enter a starting address between $0 and $00FFFE00: ',0
-enter_start_AD  DC.B    'Enter a starting address: ',0
+enter_start_AD      DC.B    'Enter a starting address: ',0
 userStartAddrInput  DS.B    50  address used to store the data input from user
 userEndAddrInput    DS.B    50  address used to stoer the data input from use
-userEnd         DC.B    'Enter an address greater than the starting address: ',0
-userEndInput    DS.B    50  addresse used to store the data input from user
-error_inv_to_many_char  LEA no_entry,A1 load bad entry statment
-    MOVE.L  #1,D0
+userEnd             DC.B    'Enter an address greater than the starting address: ',0
+userEndInput        DS.B    50  addresse used to store the data input from user
+
+
+
+
+
+
+endingDisplay
+
+    *-----------------Display to show ending out program
+    LEA     ending00,A1
+    MOVE.B  ending00,D1
+    MOVE.B  #0,D0
     TRAP    #15
-    ;JMP     get_input
-
-*    -i dea i could load the string "           DATA            " without the cursor and find a way to load the address at the line
-
-
+    
+    LEA     ending01,A1
+    MOVE.B  ending01,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending02,A1
+    MOVE.B  ending02,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending03,A1
+    MOVE.B  ending03,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    LEA     ending04,A1
+    MOVE.B  ending04,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+    
+    LEA     ending05,A1
+    MOVE.B  ending05,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+       
+    LEA     ending06,A1
+    MOVE.B  ending06,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+        
+    LEA     ending07,A1
+    MOVE.B  ending07,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+    LEA     ending08,A1
+    MOVE.B  ending08,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+    LEA     ending09,A1
+    MOVE.B  ending09,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+        
+    LEA     ending10,A1
+    MOVE.B  ending10,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    
+        
+************Ask if user wants to run again  
+runAgain    
+    MOVE.W  #0000,D0
+    LEA     rerunState,A1       Prompt for re runnning queston
+    MOVE.B  rerunBuf,D1       
+    TRAP    #15                     
+    LEA     userRerun,A1
+    MOVE.B  #2,D0
+    TRAP    #15
+            * Add users answer to D2 and compare with ASCII value
+    MOVE.B  (A1),D2
+    CMP.B   #$59,D2        COMPARE to Upper and Lower case 'Y''s
+    BEQ     reset
+    CMP.B   #$79,D2             
+    BEQ     reset
     END    START        ; last line of source
-
-
-
-
-
-
 
 
 
@@ -1665,7 +1584,11 @@ error_inv_to_many_char  LEA no_entry,A1 load bad entry statment
 
 
 
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 0ce4dc93605e74bba34baeab57aa548ce770ac4e
 
 *~Font name~Courier New~
 *~Font size~10~
