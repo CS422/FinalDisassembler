@@ -4,7 +4,7 @@
 
 *    Written by : Danny Ly & Edward Chang
 
-*    Date       : 4/27/2017
+*    Date       : 6/27/2017
 
 *    Description: Our dissasembler for 68KKrew
 
@@ -460,8 +460,11 @@ get_next_instruction:
     
     MOVE.W  (A4)+,D6 INCREMENT OUT STARTING/CURRENT POINTER BY A WORD, STORE THE CONTENTS OF WHAT ITS CURRENTLY POINTING AT
     *-WHICH WOULD BE THE OPCODE DATA, INTO D6
-
-    MOVE.L  (A4),D4  If absolute addressing => this will be operand
+    * operand or list date setting
+    MOVE.L  A4,A1       A1 = A4
+    MOVE.L  (A4),D4  If MOVEM => D4 will be listData, otherwise D4=>operand                  
+    MOVE.W  (A1)+,$12  If MOVEM absolute addressing => (A4) this will be operand 
+    
     MOVE.W  D6,D3
     LSR.W   #8,D3
     
@@ -1658,6 +1661,9 @@ error_inv_to_many_char  LEA no_entry,A1 load bad entry statment
 *    ~Tab type~1~
 
 *    ~Tab size~4~
+
+
+
 
 
 

@@ -1,10 +1,10 @@
 
 op0100      *MOVEM, JSR,LEA,RTS,NOP
 *    -CLR and MOVEM CHECK if its CLR or moveM
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
+    MOVE.B  #' ',(A2)+
+    MOVE.B  #' ',(A2)+
+    MOVE.B  #' ',(A2)+
+    MOVE.B  #' ',(A2)+
 *    
 
 *    
@@ -50,19 +50,7 @@ op0100      *MOVEM, JSR,LEA,RTS,NOP
     CMP.B   #7,D2
     BEQ     _LEA        branch to LEA
     
-    JSR check_clr_or_moveM
 
-    CMP.B   #hex_8,D3
-
-    BEQ     clr_B   ;clr.B
-
-    CMP.B   #hex_9,D3
-
-    BEQ     clr_W   ;clr.W
-
-    CMP.B   #hex_A,D3
-
-    BEQ     clr_L   ;clr.L
 
     
 
@@ -95,20 +83,41 @@ op0100      *MOVEM, JSR,LEA,RTS,NOP
     BEQ     _JSR
     CMP.W   #$4EA0,D6   ;see if it's a JSR
     BEQ     _JSR
+    CMP.W   #$4CFF,D6
+    BGE     _JSR
+*    CMP.W   $42FF,D6
+*    BLE     check_clr
+    
 *    ---------------------------------------------------------
 *    Check MOVEM
 *    ---------------------------------------------------------
     CLR.L   D0
     MOVE.B  D6,D0           *X** **** 
-    CLR.L   D1
-    LSL.B   #1,D1           X*** ***0
-    LSR.B   #7,D1           0000 000X
-    CMP.B   #0,D1              
+    LSL.B   #1,D0           X*** ***0
+    LSR.B   #7,D0           0000 000X
+    CMP.B   #0,D0              
 *   1. bit 6 : 0 => movem.W   
-    BEQ     _movemW     ;branch   
+    BEQ     _movemW    ;branch   
 *   1. bit 6 : 1 => movem.L
-    BNE     _movemL
-    
+    BNE     _movemL 
+*    ---------------------------------------------------------
+*    Check CLR
+*    ---------------------------------------------------------    
+check_clr
+    CLR.L   D3
+    MOVE.B  D6,D3
+    LSR.B   #6,D3
+    CMP.B   #0,D3
+
+    BEQ     clr_B   ;clr.B
+
+    CMP.B   #1,D3
+
+    BEQ     clr_W   ;clr.W
+
+    CMP.B   #2,D3
+
+    BEQ     clr_L   ;clr.L    
     
 *    ---------------------------------------------------------    
 _movemW
@@ -140,15 +149,12 @@ DecodeDr
 * decode bit 10 for direction
     * bit 10 : 0 => RtoM 1=>MtoR
     CLR.L   D0
-    MOVE.W  D6,D0           **** *X** **** **** 
-    SWAP    D0              **** **** **** *X**
-    CLR.L   D1
-    MOVE.B  D0,D1           *X**
-    LSL.B   #1,D1           X**0
-    LSR.B   #3,D1           000X
-    CLR.L   D7
-    MOVE.B  D1,D7           D7 holds the bit 10: dr
-    CMP.B   #0,D1           
+    MOVE.W  D6,D0           **** *X** **** ****
+    LSL.W   #5,D0           X*** **** ***0 0000
+    LSR.W   #8,D0           0000 0000 X*** ****
+    LSR.W   #7,D0           0000 0000 0000 000X
+    MOVE.B  D0,D7           D7 holds the bit 10: dr
+    CMP.B   #0,D0           
     BEQ     RtoM            
     JSR     MtoR       
 *    ---------------------------------------------------------
@@ -160,11 +166,12 @@ RtoM
     LSR.B   #5,D2
     CMP.B   #4,D2 
 *1. bit3to5: 4 => decodeListDesc      
-    BEQ     decodeListDesc      predecrement
+    BEQ     decodeListDescRtoM      predecrement
 *2. bit3to5: NOT 4 => decodeListAsc       
-    BNE     decodeListAsc       both controlmode/postincrement
+    BNE     decodeListAscRtoM       both controlmode/postincrement
 *    ---------------------------------------------------------
 RtoMEA
+    JSR     moveIntPointerWord  RtoM
     MOVE.B  #',',(A2)+
 *    ---------------------------------------------------------
     JSR     get_3to5_bit
@@ -180,6 +187,7 @@ RtoMEA
     BRA printCode
 *    ------------------------------------------------------------
 immAbRtoM
+    MOVE.L  (A1)+,D4            move address pointer to absolute addressing data    
     LEA     immAbTable, A6
     MULU    #8,D1
     JSR     (A6,D1)
@@ -187,41 +195,52 @@ immAbRtoM
 *    ------------------------------------------------------------
 *    End of RtoM
 *    ------------------------------------------------------------
-
-
 MtoR    
 *    ---------------------------------------------------------
     JSR     get_3to5_bit
     JSR     get_0to2_bit    
+    JSR     moveIntPointerWord
 *    ---------------------------------------------------------
 *    Only Absolute addressing
     CMP.B   #7,D2
     BEQ     immAbMtoR
+    BNE     adjustMtoR_A1
+adjustMtoR_A1
+    MOVE.W  -(A1),D0
 *    ---------------------------------------------------------
+decodeListMtoR
+*if abs.addressing => (A1)listData :
+*otherwise  MOVE.W -(A1) then (A1)list data
     MOVE.B  #',',(A2)+
-    CMP.B   #4,D2       
-    BEQ     decodeListDesc      predecrement
-    BNE     decodeListAsc       both controlmode/postincrement
+    CMP.B   #4,D2  
+    BEQ     decodeListDescMtoR      predecrement   
+    BNE     decodeListAscMtoR       both controlmode/postincrement
 *    ---------------------------------------------------------
 *    end of decoding
 *    ------------------------------------------------------------
 immAbMtoR
+       
+    MOVE.L  (A1),D4            move address pointer to absolute addressing data 
+    MOVE.W  -(A1),D0   
     LEA     immAbTable, A6
     MULU    #8,D1
     JSR     (A6,D1)
-    BRA     printCode
+    BRA     decodeListMtoR
 *    ------------------------------------------------------------
 *    End of MtoR
 *    ------------------------------------------------------------
 *   decodeList
 *    ------------------------------------------------------------
-decodeListAsc
-* bit 0 to 7, going D0 to D7
-    MOVE.L  D4,D5
-    LSR.L   #8,D5
-    LSR.L   #8,D5
+decodeListAscRtoM
+    MOVE.W  -(A1),D5    if from RtoM    XXXX
     CLR.L   D2
-FindSmallestD
+    BRA     FindSmallestD           
+decodeListAscMtoR
+    MOVE.W  (A1),D5    if from MtoR
+    CLR.L   D2
+    BRA     FindSmallestD 
+* bit 0 to 7, going D0 to D7
+FindSmallestD           ;**XX 
     MOVE.W  D5,D3
     AND.B   #%0001,D3   check the smallest bit
     CMP.B   #1,D3
@@ -245,12 +264,9 @@ FoundSD
     BRA     FindSmallestD
 *    ------------------------------------------------------------    
 * bit 8 to 15, going A0 to A7
-setupFindSA    
-    MOVE.L  D4,D5
-    
-    LSR.L   #8,D5
-    LSR.L   #8,D5
-    LSR.L   #8,D5
+setupFindSA             ;XX**
+    MOVE.W  (A1)+,D5    if RtoM     
+    LSR.L   #8,D5       ;00XX
     CLR.L   D2
     CLR.L   D3
 FindSA
@@ -277,12 +293,16 @@ FoundSA
     LSR.W   #1,D5
     BRA     FindSA
 *    ------------------------------------------------------------ 
-decodeListDesc
-* bit 7 to 0, going A0 to A7
-    MOVE.L  D4,D5
-    LSR.L   #8,D5
-    LSR.L   #8,D5
+decodeListDescRtoM
+    MOVE.W  -(A1),D5    if from RtoM    XXXX
     CLR.L   D2
+    BRA     FindLargestA
+decodeListDescMtoR
+    JSR moveIntPointerWord
+    MOVE.W  (A1)+,D5    if from MtoR
+    CLR.L   D2
+    BRA     FindLargestA
+* bit 7 to 0, going A0 to A7
 FindLargestA
     MOVE.W  D5,D3
     AND.W   #$F0,D3
@@ -293,8 +313,7 @@ FindLargestA
     ADD.B   #1,D2           increment
     CMP.B   #8,D2           end of the loop compare
     BGE     setupFindLargestD    end of the loop
-    BNE     FindLargestA
-    
+    BNE     FindLargestA  
 FoundLA
 *print
     MOVE.B  #'A',(A2)+
@@ -309,10 +328,12 @@ FoundLA
     BRA     FindLargestA
 *    ------------------------------------------------------------    
 * bit 15 to 8, going D0 to D7
-setupFindLargestD    
-    MOVE.L  D4,D5
-    LSR.L   #8,D5
-    LSR.L   #8,D5
+setupFindLargestD  
+    MOVE.W  (A1),D5
+  
+*    MOVE.L  D4,D5
+*    LSR.L   #8,D5
+*    LSR.L   #8,D5
     LSR.L   #8,D5
     CLR.L   D2
     CLR.L   D3
@@ -342,9 +363,14 @@ FoundLD
 *    ------------------------------------------------------------ 
 AfterList    
     MOVE.B  #' ',-(A2)
+    
     CMP.B   #0,D7
     BEQ     RtoMEA          RtoM
+    
     BNE     printCode       MtoR
+    
+    
+    
 *    ------------------------------------------------------------ 
 *       End of MOVEM
 *    ------------------------------------------------------------ 
@@ -354,11 +380,6 @@ AfterList
 *    ---------------------------------------------------------           
 
 _NOP
-    MOVE.L  #2,D7       ;data is not error
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
     MOVE.B  #'N',(A2)+      ;print N
     MOVE.B  #'O',(A2)+      ;print O
     MOVE.B  #'P',(A2)+      ;print P
@@ -371,11 +392,6 @@ _NOP
 *    ---------------------------------------------------------
 
 _RTS    
-    MOVE.L  #2,D7       ;data is not error
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
     MOVE.B  #'R',(A2)+      ;print R
     MOVE.B  #'T',(A2)+      ;print T
     MOVE.B  #'S',(A2)+      ;print S
@@ -388,11 +404,6 @@ _RTS
 *    ---------------------------------------------------------
 
 _LEA    
-    MOVE.L  #2,D7       ;data is not error
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
     MOVE.B  #'L',(A2)+      ;print R
     MOVE.B  #'E',(A2)+      ;print T
     MOVE.B  #'A',(A2)+      ;print S
@@ -434,11 +445,6 @@ desDecodeLEA
 *    ---------------------------------------------------------
 
 _JSR
-    MOVE.L  #2,D7       ;data is not error
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
-    MOVE.B  #' ',(A2)+      ;print spaces
     MOVE.B  #'J',(A2)+      ;print J
     MOVE.B  #'S',(A2)+      ;print S
     MOVE.B  #'R',(A2)+      ;print R
@@ -472,10 +478,6 @@ clr_B       ;CLR.B
     CMP.B   #%100,D3    ;compare to immediate data
 
     ;Print/store CLR.B here
-    MOVE.B  #' ',(A2)+
-    MOVE.B  #' ',(A2)+
-    MOVE.B  #' ',(A2)+
-    MOVE.B  #' ',(A2)+
     MOVE.B  #'C',(A2)+  ;print C
     MOVE.B  #'L',(A2)+  ;print L
     MOVE.B  #'R',(A2)+  ;print R
@@ -501,10 +503,6 @@ clr_W       ;CLR.W
     CMP.B   #%100,D3    ;compare to immediate data
 
     ;Print/store CLR.B here
-    MOVE.B  #' ',(A2)+
-    MOVE.B  #' ',(A2)+
-    MOVE.B  #' ',(A2)+
-    MOVE.B  #' ',(A2)+
     MOVE.B  #'C',(A2)+  ;print C
     MOVE.B  #'L',(A2)+  ;print L
     MOVE.B  #'R',(A2)+  ;print R
@@ -528,10 +526,6 @@ clr_L       ;CLR.L
     CMP.B   #%100,D3    ;compare to immediate data
 
     ;Print/store CLR.B here
-    MOVE.B  #' ',(A2)+
-    MOVE.B  #' ',(A2)+
-    MOVE.B  #' ',(A2)+
-    MOVE.B  #' ',(A2)+
     MOVE.B  #'C',(A2)+  ;print C
     MOVE.B  #'L',(A2)+  ;print L
     MOVE.B  #'R',(A2)+  ;print R
@@ -563,19 +557,6 @@ immAbLEA
     JSR     (A6,D1)
     BRA     desDecodeLEA
 *    ------------------------------------------------------------
-check_clr_or_moveM:
-    CLR.L   D3
-    MOVE.W  D6,D3
-    AND.W   #$0FF0,D3
-    LSR.W   #6,D3
-    AND.W   #$000F,D3
-    RTS
-*    -----------------------------------------------------------
-
-
-
-
-*    ------------------------------------------------------------
 *       End of file
 *    ------------------------------------------------------------
 
@@ -592,6 +573,13 @@ check_clr_or_moveM:
 *    ~Tab type~1~
 
 *    ~Tab size~4~
+
+
+
+
+
+
+
 
 
 
