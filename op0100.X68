@@ -85,8 +85,12 @@ op0100      *MOVEM, JSR,LEA,RTS,NOP
     BEQ     _JSR
     CMP.W   #$4CFF,D6
     BGE     _JSR
-*    CMP.W   $42FF,D6
-*    BLE     check_clr
+    
+    *-once we get here check if its CLR
+    MOVE.W  D6,D5   [BITT BITT XXXX XXXX]
+    LSR.W   #8,D5
+    CMP.B   #$42,D5
+    BEQ     opERROR
     
 *    ---------------------------------------------------------
 *    Check MOVEM
@@ -99,7 +103,10 @@ op0100      *MOVEM, JSR,LEA,RTS,NOP
 *   1. bit 6 : 0 => movem.W   
     BEQ     _movemW    ;branch   
 *   1. bit 6 : 1 => movem.L
-    BNE     _movemL 
+    CMP.B   #1,D0
+    BEQ     _movemL 
+    
+    BRA     opError
 *    ---------------------------------------------------------
 *    Check CLR
 *    ---------------------------------------------------------    
@@ -573,6 +580,7 @@ immAbLEA
 *    ~Tab type~1~
 
 *    ~Tab size~4~
+
 
 
 
